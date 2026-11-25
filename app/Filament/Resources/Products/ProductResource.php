@@ -48,6 +48,16 @@ class ProductResource extends Resource
                 }),
                 TextColumn::make('cost_price')->label(__('admin.unit_cost'))->money('ILS')->sortable(),
                 TextColumn::make('selling_price')->label(__('admin.selling_price'))->money('ILS')->sortable(),
+                TextColumn::make('profit')->label(__('admin.profit'))->money('ILS')
+                    ->state(fn (Product $record) => round($record->selling_price - $record->cost_price, 2))
+                    // Percentage is on cost, like the markup setting.
+                    ->description(fn (Product $record) => $record->cost_price > 0
+                        ? round(($record->selling_price - $record->cost_price) / $record->cost_price * 100, 1).'%'
+                        : null)
+                    ->color(fn (Product $record) => $record->selling_price > $record->cost_price ? 'success' : 'danger')
+                    ->sortable(query: fn (Builder $query, string $direction) => $query->orderByRaw(
+                        'selling_price - cost_price '.($direction === 'desc' ? 'desc' : 'asc'),
+                    )),
                 TextColumn::make('price_override')->label(__('admin.price_override'))->money('ILS')->placeholder('—'),
                 TextColumn::make('total_quantity')->label(__('admin.stock'))->sortable(),
                 ToggleColumn::make('hidden')->label(__('admin.hidden')),

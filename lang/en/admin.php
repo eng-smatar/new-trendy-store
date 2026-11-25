@@ -134,6 +134,7 @@ return [
     'listed_now' => ':count of :total sellable products are listed in the store now.',
     'listing_min_profit_help' => 'Profit is selling price minus cost. 0 means no filter.',
     'listing_categories_help' => 'Choosing a category includes its subcategories. Leave empty to list everything.',
+    'profit' => 'Profit',
     'errors' => [
         'check_in_mart' => 'Check this order in Mart first.',
         'product_gone' => '":name" is no longer available.',

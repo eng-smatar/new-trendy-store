@@ -36,6 +36,21 @@ class AdminAccessTest extends TestCase
         }
     }
 
+    public function test_product_list_shows_and_sorts_by_profit(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $small = Product::factory()->create(['cost_price' => 50]);                          // 10, 20%
+        $big = Product::factory()->create(['cost_price' => 100, 'price_override' => 175]);  // 75, 75%
+        $none = Product::factory()->create(['cost_price' => 80, 'price_override' => 80]);   // 0
+
+        Livewire::test(ListProducts::class)
+            ->assertTableColumnStateSet('profit', 75.0, $big)
+            ->assertTableColumnHasDescription('profit', '75%', $big)
+            ->assertTableColumnStateSet('profit', 0.0, $none)
+            ->sortTable('profit', 'desc')->assertCanSeeTableRecords([$big, $small, $none], inOrder: true)
+            ->sortTable('profit', 'asc')->assertCanSeeTableRecords([$none, $small, $big], inOrder: true);
+    }
+
     public function test_override_below_cost_is_rejected(): void
     {
         $this->actingAs(User::factory()->create());
