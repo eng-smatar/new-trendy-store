@@ -136,7 +136,7 @@ The owner changes how the website looks and behaves from a settings area in the 
 - **FR-019**: The admin panel MUST be available in Arabic (right-to-left) and English (left-to-right), with each administrator's choice remembered.
 - **FR-020**: Administrators MUST be able to edit website settings in these groups:
   - Identity: store name, logo, browser icon, main colour.
-  - Contact: phone, WhatsApp number, email, address, social links.
+  - Contact: footer description, phone, WhatsApp number, email, address, social links. The footer also lists shop links and the current delivery fees per zone.
   - Home page: announcement text. The hero slider shows a random selection of in-stock products on each visit.
   - Pages: about, delivery and returns, privacy, terms.
   - Search engines: default page title, description and sharing image.

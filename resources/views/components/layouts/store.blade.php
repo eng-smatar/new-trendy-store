@@ -40,26 +40,6 @@
         {{ $slot }}
     </main>
 
-    <footer class="border-t border-stone-200 bg-white">
-        <div class="mx-auto max-w-6xl px-4 py-6 text-sm text-stone-600">
-            <p>{{ __('store.cod_note') }}</p>
-            <nav class="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-                <a href="{{ url('/track') }}" class="underline">{{ __('store.track') }}</a>
-                @foreach (['about', 'delivery', 'privacy', 'terms'] as $page)
-                    <a href="{{ url('/pages/'.$page) }}" class="underline">{{ __('store.page.'.$page) }}</a>
-                @endforeach
-            </nav>
-            <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-                @if ($phone = Setting::get('contact_phone'))<li><a href="tel:{{ $phone }}"><bdi dir="ltr">{{ $phone }}</bdi></a></li>@endif
-                @if ($whatsapp = Setting::get('whatsapp'))<li><a href="https://wa.me/{{ $whatsapp }}" rel="noopener">{{ __('store.whatsapp') }}</a></li>@endif
-                @if ($email = Setting::get('contact_email'))<li><a href="mailto:{{ $email }}">{{ $email }}</a></li>@endif
-                @if ($address = Setting::get('contact_address'))<li>{{ $address }}</li>@endif
-                @foreach ((array) Setting::get('social_links') as $social)
-                    <li><a href="{{ $social['url'] }}" rel="noopener" class="underline">{{ $social['label'] }}</a></li>
-                @endforeach
-            </ul>
-            <p class="mt-2">&copy; {{ date('Y') }} {{ $storeName }}</p>
-        </div>
-    </footer>
+    <x-store-footer />
 </body>
 </html>

@@ -92,6 +92,7 @@ return [
         'Isreal' => 'Free delivery from (48 areas)',
     ],
     'fields' => [
+        'footer_text' => 'Footer description',
         'store_name' => 'Store name',
         'logo' => 'Logo',
         'icon' => 'Browser icon',

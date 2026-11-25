@@ -25,7 +25,7 @@ class ManageSettings extends Page
 
     public const KEYS = [
         'store_name', 'logo', 'icon', 'main_color',
-        'contact_phone', 'whatsapp', 'contact_email', 'contact_address', 'social_links',
+        'footer_text', 'contact_phone', 'whatsapp', 'contact_email', 'contact_address', 'social_links',
         'announcement',
         'page_about', 'page_delivery', 'page_privacy', 'page_terms',
         'seo_title', 'seo_description', 'seo_image',
@@ -86,6 +86,7 @@ class ManageSettings extends Page
                         }),
                 ]),
                 Tab::make(__('admin.tabs.contact'))->schema([
+                    Textarea::make('footer_text')->label(__('admin.fields.footer_text'))->maxLength(300),
                     $text('contact_phone', 40)->tel(),
                     $text('whatsapp', 20)->regex('/^[0-9]{8,15}$/')->helperText(__('admin.whatsapp_help')),
                     $text('contact_email')->email(),

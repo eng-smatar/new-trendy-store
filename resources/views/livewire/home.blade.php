@@ -7,7 +7,7 @@
         <x-hero-slider :products="$slides" />
     @endif
     @if ($categories->isNotEmpty())
-        <nav aria-label="{{ __('store.categories') }}" class="flex gap-2 overflow-x-auto pb-2">
+        <nav id="categories" aria-label="{{ __('store.categories') }}" class="flex gap-2 overflow-x-auto pb-2">
             @foreach ($categories as $category)
                 <a href="{{ url('/categories/'.$category->id) }}" class="btn-ghost shrink-0" dir="auto">{{ $category->label() }}</a>
             @endforeach

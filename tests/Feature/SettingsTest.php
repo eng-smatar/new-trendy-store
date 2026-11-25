@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Filament\Pages\ManageSettings;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\Town;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -50,6 +51,20 @@ class SettingsTest extends TestCase
             ->call('save')->assertHasFormErrors(['main_color', 'contact_email', 'logo']);
 
         $this->assertSame('قديم', Setting::get('store_name'));
+    }
+
+    public function test_footer_shows_real_delivery_fees_and_socials(): void
+    {
+        foreach ([[1, 248, 20], [2, 248, 30], [3, 256, 65]] as [$id, $district, $fee]) {
+            Town::create(['id' => $id, 'district_id' => $district, 'district_name' => 'd', 'name' => 't', 'available' => true,
+                'fees' => [['from_total' => 0, 'to_total' => null, 'fee' => $fee]]]);
+        }
+
+        $this->get('/')->assertOk()
+            ->assertSee(__('store.fee_range', ['min' => '20', 'max' => '30']))->assertSee('₪65')
+            ->assertSee(__('store.free_from', ['amount' => '1,000']))
+            ->assertDontSee(__('store.zones.default').':')
+            ->assertSee('instagram.com/trendy.windy.79', false)->assertSee('aria-label="TikTok"', false);
     }
 
     public function test_page_html_is_sanitised(): void
