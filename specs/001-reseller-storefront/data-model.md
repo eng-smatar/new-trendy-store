@@ -21,7 +21,7 @@ Money: `decimal(10,2)` ILS. Mart ids are kept as given.
 - Zone from `district_id`: 248 `Jerusalem`; 256-262 `Isreal`; otherwise `default`.
 
 ## orders
-`id`, `reference` (unique, random, ≤64, sent as `partner_reference`), `first_name`, `last_name`, `phone`, `email?`, `gender`, `town_id`, `district_name`, `town_name`, `address_line1`, `notes?`, `admin_note?`, `status`, `products_total`, `shipping_fee` (Mart fee), `free_shipping`, `customer_total`, `expected_net`, `quote_verified`, `attention_reason?`, `request_body?` (json, frozen at approval), `last_error?`, `mart_status_id?`, `mart_status_name?`, `earning_state?`, `net_earning?`, `approved_by?`, `approved_at?`, `submitted_at?`.
+`id`, `reference` (unique, random, ≤64, sent as `partner_reference`), `first_name`, `last_name`, `phone`, `email?`, `gender`, `town_id`, `district_name`, `town_name`, `address_line1`, `notes?`, `admin_note?`, `status`, `products_total`, `shipping_fee` (Mart fee), `free_shipping`, `customer_total`, `expected_net`, `quote_verified`, `attention_reason?`, `send_attempts`, `next_attempt_at?`, `request_body?` (json, frozen at approval), `last_error?`, `mart_status_id?`, `mart_status_name?`, `earning_state?`, `net_earning?`, `approved_by?`, `approved_at?`, `submitted_at?`.
 
 Validation: FR-023. `customer_total = products_total + (free_shipping ? 0 : shipping_fee)`.
 

@@ -8,7 +8,7 @@ Sources: docs.mart.ps and its `openapi.json`, read-only and dry-run calls to the
 - **Rejected**: Hand-built admin (more code); Inertia/Vue or Next.js storefront (second front-end stack); Pest 5 (needs PHP 8.4).
 
 ## Database
-- **Decision**: MySQL. Local server is 5.7.39, which is end-of-life: use MySQL 8 in production and avoid version-specific SQL.
+- **Decision**: MySQL 8. The local server is 8.0.27 on port 3307 (the 5.7 seen earlier was only the command-line client).
 - **Rejected**: SQLite (web, queue and sync write concurrently).
 
 ## Catalogue sync
@@ -43,4 +43,4 @@ Sources: docs.mart.ps and its `openapi.json`, read-only and dry-run calls to the
 ## Open (not blocking)
 - Category names are English paths such as `clothing & accessories > clothing`. Plan: build the tree by splitting on `>`, show as given. An optional Arabic name per category would be a small addition.
 - Production data and limits not checked; Mart's permission to sell from an own website not confirmed.
-- No sandbox order has been created yet, so status names are not known; store Mart's id and name as received.
+- Sandbox run during implementation: order reads return Arabic status names (for example `انتظار التأكيد هاتفيا`, `ملغي`), so they are shown as received. The create response has only the English word `processing`, which is not stored.

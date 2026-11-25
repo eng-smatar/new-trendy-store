@@ -1,0 +1,112 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Livewire\Catalog;
+use App\Models\Product;
+use App\Models\Setting;
+use App\Services\Pricing;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
+use Livewire\Livewire;
+use Tests\TestCase;
+
+class CatalogTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public static function martProduct(int $id, float $cost = 100, array $extra = []): array
+    {
+        return array_replace([
+            'product_id' => $id, 'reference' => "R$id", 'name' => "منتج $id", 'status' => 'active', 'brand' => null,
+            'category' => null, 'price' => ['group_price' => $cost], 'total_quantity' => 3, 'in_stock' => true,
+            'cover_image' => null, 'images' => [], 'combinations' => [], 'description' => '', 'description_short' => '',
+        ], $extra);
+    }
+
+    private function page(array $products, bool $hasNext = false): array
+    {
+        return ['data' => ['products' => $products], 'meta' => ['pagination' => ['has_next' => $hasNext]]];
+    }
+
+    public function test_price_never_drops_below_cost(): void
+    {
+        $this->assertSame(120.0, Pricing::selling(100));
+        $this->assertSame(100.0, Pricing::selling(100, 50));
+        $this->assertSame(150.0, Pricing::selling(100, 150));
+
+        $product = Product::factory()->create(['price_override' => 110]);
+        $product->update(['cost_price' => 130]);
+        $this->assertEquals(130, $product->selling_price);
+
+        Product::factory()->create(['id' => 7]);
+        Setting::set('markup_percent', 50);
+        Pricing::recalculate();
+        $this->assertEquals(150, Product::find(7)->selling_price);
+        $this->assertEquals(130, $product->fresh()->selling_price);
+    }
+
+    public function test_sync_keeps_admin_fields_and_marks_missing_products(): void
+    {
+        Product::factory()->create(['id' => 1, 'price_override' => 175, 'hidden' => true, 'featured' => true]);
+        Product::factory()->create(['id' => 2]);
+        Http::fake([
+            '*/categories' => Http::response(['data' => ['categories' => [['category_id' => 9, 'category_name' => 'a > b']]]]),
+            '*/products*' => Http::response($this->page([self::martProduct(1, 90)])),
+        ]);
+
+        $this->artisan('mart:sync-catalog')->assertSuccessful();
+
+        $kept = Product::find(1);
+        $this->assertEquals(175, $kept->selling_price);
+        $this->assertTrue($kept->hidden && $kept->featured);
+        $this->assertEquals(90, $kept->cost_price);
+        $this->assertNotNull(Product::find(2)->removed_at);
+        $this->assertNotNull(Setting::get('sync_last_success'));
+    }
+
+    public function test_failed_page_removes_nothing(): void
+    {
+        Sleep::fake();
+        Product::factory()->create(['id' => 2]);
+        Http::fake([
+            '*/categories' => Http::response(['data' => ['categories' => []]]),
+            '*page=1&*' => Http::response($this->page([self::martProduct(1)], true)),
+            '*page=2&*' => Http::response('boom', 500),
+        ]);
+
+        $this->artisan('mart:sync-catalog')->assertFailed();
+
+        $this->assertNull(Product::find(2)->removed_at);
+        $this->assertNotNull(Setting::get('sync_last_error'));
+    }
+
+    public function test_search_ignores_hamza_and_hides_hidden_products(): void
+    {
+        Product::factory()->create(['name' => 'أحذية رياضية']);
+        $hidden = Product::factory()->create(['name' => 'احذية مخفية', 'hidden' => true]);
+
+        foreach (['احذية', 'أحذيه'] as $term) {
+            Livewire::test(Catalog::class)->set('q', $term)->assertSee('أحذية رياضية')->assertDontSee('احذية مخفية');
+        }
+
+        $this->get('/products/'.$hidden->id)->assertNotFound();
+    }
+
+    public function test_paging_moves_and_a_new_filter_returns_to_page_one(): void
+    {
+        Product::factory()->count(30)->create();
+
+        Livewire::test(Catalog::class)->call('nextPage')->assertSet('paginators.page', 2)
+            ->set('available', true)->assertSet('paginators.page', 1);
+    }
+
+    public function test_description_scripts_are_removed(): void
+    {
+        $product = Product::factory()->create(['description' => '<p>وصف</p><script>alert(1)</script><img src=x onerror="alert(2)">']);
+
+        $this->get('/products/'.$product->id)->assertOk()->assertSee('<p>وصف</p>', false)
+            ->assertDontSee('alert(1)', false)->assertDontSee('alert(2)', false);
+    }
+}

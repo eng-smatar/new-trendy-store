@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+
+@source '../../storage/framework/views/*.php';
+
+/* Tokens: see specs/001-reseller-storefront/design.md */
+@theme inline {
+    --font-sans: var(--font-ibm-plex-sans-arabic), ui-sans-serif, system-ui, sans-serif;
+    --color-brand: var(--brand, #3f2878);
+    --color-brand-soft: color-mix(in srgb, var(--brand, #3f2878) 10%, white);
+}
+
+/* @utility so other classes can @apply it */
+@utility btn {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@layer components {
+    .btn-primary { @apply btn bg-brand text-white hover:brightness-110; }
+    .btn-ghost { @apply btn border border-stone-300 bg-white text-stone-800 hover:bg-stone-100; }
+    .field { @apply min-h-11 w-full rounded-xl border border-stone-300 bg-white px-3 text-base disabled:bg-stone-100; }
+    .label { @apply mb-1 block text-sm font-medium text-stone-700; }
+    .error { @apply mt-1 text-sm text-red-700; }
+    .card { @apply rounded-2xl border border-stone-200 bg-white; }
+    .rich h2, .rich h3 { @apply mt-4 mb-2 font-bold; }
+    .rich p { @apply my-2; }
+    .rich ul { @apply my-2 list-disc ps-5; }
+    .rich ol { @apply my-2 list-decimal ps-5; }
+    .rich table { @apply my-2 w-full text-sm; }
+    .rich th, .rich td { @apply border border-stone-200 p-2 text-start; }
+}
+
+:focus-visible { outline: 3px solid var(--brand, #3f2878); outline-offset: 2px; }
