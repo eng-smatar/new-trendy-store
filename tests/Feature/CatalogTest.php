@@ -121,6 +121,23 @@ class CatalogTest extends TestCase
         $this->get('/categories/9')->assertSee('أحذية الرجال');
     }
 
+    public function test_search_finds_products_by_arabic_category_name(): void
+    {
+        Category::create(['id' => 1, 'name' => 'health & beauty > beauty > fragrances']);
+        Category::create(['id' => 2, 'name' => "health & beauty > beauty > fragrances > men's fragrances"]);
+        Product::factory()->create(['name' => 'Oud 100ml', 'category_id' => 2]);
+        Product::factory()->create(['name' => 'Hammer', 'category_id' => null]);
+
+        // Own name, an ancestor's name with hamza dropped, and category word plus product word.
+        foreach (['عطور رجالية', 'الصحه', 'العطور oud'] as $term) {
+            Livewire::test(Catalog::class)->set('q', $term)->assertSee('Oud 100ml')->assertDontSee('Hammer');
+        }
+
+        Category::find(1)->update(['name_ar' => 'روائح']);
+        Livewire::test(Catalog::class)->set('q', 'روائح')->assertSee('Oud 100ml');
+        Livewire::test(Catalog::class)->set('q', 'روائح hammer')->assertDontSee('Oud 100ml');
+    }
+
     public function test_description_scripts_are_removed(): void
     {
         $product = Product::factory()->create(['description' => '<p>وصف</p><script>alert(1)</script><img src=x onerror="alert(2)">']);

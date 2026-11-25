@@ -49,11 +49,18 @@ class Catalog extends Component
         $category = $this->categoryId ? Category::find($this->categoryId) : null;
         $words = array_filter(explode(' ', ArabicText::normalize(mb_substr($this->q, 0, 100))), 'strlen');
 
+        $arabicCategories = $words ? Category::arabicSearchIndex() : collect();
+
         $products = Product::visible()
             ->when($category, fn ($query) => $query->whereIn('category_id', $category->branchIds()))
-            ->where(function ($query) use ($words) {
+            ->where(function ($query) use ($words, $arabicCategories) {
+                // Every word must match the product text or its category's Arabic name.
                 foreach ($words as $word) {
-                    $query->where('search_text', 'like', '%'.addcslashes($word, '%_\\').'%');
+                    $categoryIds = $arabicCategories->filter(fn (string $names) => str_contains($names, $word))->keys();
+
+                    $query->where(fn ($match) => $match
+                        ->where('search_text', 'like', '%'.addcslashes($word, '%_\\').'%')
+                        ->orWhereIn('category_id', $categoryIds));
                 }
             })
             ->when(is_numeric($this->min), fn ($query) => $query->where('selling_price', '>=', (float) $this->min))

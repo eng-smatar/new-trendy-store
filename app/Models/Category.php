@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ArabicText;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -25,6 +26,29 @@ class Category extends Model
         $segment = trim(last(explode('>', $this->name)));
 
         return trans('categories', [], 'ar')[$segment] ?? $segment;
+    }
+
+    /**
+     * Normalised Arabic names of each category and its ancestors, keyed by id. Built at search time,
+     * so an admin rename applies at once.
+     *
+     * @return Collection<int, string>
+     */
+    public static function arabicSearchIndex(): Collection
+    {
+        $all = static::all()->keyBy('name');
+
+        return $all->mapWithKeys(function (self $category) use ($all) {
+            $parts = explode(' > ', $category->name);
+            $labels = [];
+
+            foreach (array_keys($parts) as $i) {
+                $path = implode(' > ', array_slice($parts, 0, $i + 1));
+                $labels[] = ($all->get($path) ?? new self(['name' => $path]))->label();
+            }
+
+            return [$category->id => ArabicText::normalize(implode(' ', $labels))];
+        });
     }
 
     /** Categories that have no ancestor in the list. */
