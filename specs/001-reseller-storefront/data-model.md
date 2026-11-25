@@ -8,7 +8,7 @@ Money: `decimal(10,2)` ILS. Mart ids are kept as given.
 ## products
 `id` (Mart product_id), `reference`, `name`, `description`, `description_short`, `category_id?`, `brand_name?`, `cost_price` (group_price), `price_override?`, `selling_price`, `images` (json), `cover_image`, `combinations` (json: id, available_quantity, attributes, images), `total_quantity`, `search_text`, `mart_active`, `hidden` (default false), `featured` (default false), `removed_at?`, `synced_at`.
 
-- Visible: `mart_active` and not `hidden` and `removed_at` null. Orderable: visible and the chosen quantity is in stock.
+- Visible: `mart_active` and not `hidden` and `removed_at` null and `selling_price > 0`. Orderable: visible and the chosen quantity is in stock.
 - Index: visibility columns, `category_id`, `selling_price`, `featured`.
 - Sync never overwrites `price_override`, `hidden`, `featured`.
 - `price_override >= cost_price` on save; if cost later rises above it, `selling_price = cost_price`.

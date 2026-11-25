@@ -10,6 +10,7 @@ use App\Models\Town;
 use App\Services\Cart;
 use App\Services\Checkout;
 use App\Services\CheckoutException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -125,11 +126,14 @@ class CheckoutPage extends Component
             try {
                 $figures = $checkout->quote($order, $town);
             } catch (CheckoutException $e) {
+                $this->confirmed = null;
+
                 return $this->notice = $e->getMessage();
             }
 
             if (abs($figures['customer_total'] - (float) $this->shownTotal) >= 0.01) {
-                $this->confirmed = $figures;
+                // Public properties reach the browser: never send our margin (expected_net).
+                $this->confirmed = Arr::only($figures, ['products_total', 'shipping_fee', 'free_shipping', 'customer_total']);
 
                 return $this->notice = __('store.totals_changed');
             }

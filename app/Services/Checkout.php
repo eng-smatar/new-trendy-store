@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Town;
 use App\Services\Mart\MartClient;
@@ -36,6 +37,37 @@ class Checkout
             'expected_net' => round($margin - ($free ? $fee : 0), 2),
             'quote_verified' => false,
         ];
+    }
+
+    public function isStale(MartException $e): bool
+    {
+        return in_array($e->errorCode, ['price_below_minimum', 'insufficient_stock', 'product_not_orderable', 'product_not_offered', 'unknown_combination'], true);
+    }
+
+    /** Current cost, status and stock for a few products. False when Mart could not be read. */
+    public function refreshProducts(array $ids): bool
+    {
+        $ids = array_slice(array_values(array_unique(array_map('intval', $ids))), 0, 100); // Mart's limit
+
+        try {
+            $fresh = collect($this->mart->get('products', ['product_ids' => implode(',', $ids), 'limit' => 100], 15)['data']['products'])->keyBy('product_id');
+        } catch (MartException) {
+            return false;
+        }
+
+        foreach (Product::findMany($ids) as $product) {
+            $row = $fresh->get($product->id);
+
+            // Saving recalculates the selling price from the new cost.
+            $product->fill($row ? [
+                'cost_price' => $row['price']['group_price'],
+                'mart_active' => $row['status'] === 'active',
+                'total_quantity' => $row['in_stock'] ? (int) $row['total_quantity'] : 0,
+                'combinations' => $row['combinations'] ?? [],
+            ] : ['removed_at' => now()])->save();
+        }
+
+        return true;
     }
 
     /** Whether this Mart account may absorb delivery fees. Unknown means no. */
@@ -128,6 +160,12 @@ class Checkout
             }
 
             report($e);
+
+            // Our copy is behind Mart's: re-read these products so the next attempt shows the truth.
+            if ($this->isStale($e) && $this->refreshProducts($order->items->pluck('product_id')->all())) {
+                throw new CheckoutException(__('store.prices_updated'));
+            }
+
             throw new CheckoutException(__('store.mart_refused'));
         }
     }

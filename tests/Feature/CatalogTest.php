@@ -70,6 +70,22 @@ class CatalogTest extends TestCase
         $this->assertNotNull(Setting::get('sync_last_success'));
     }
 
+    public function test_quick_pass_updates_stock_and_price_but_keeps_descriptions(): void
+    {
+        Product::factory()->create(['id' => 1, 'description' => 'وصف']);
+        $row = self::martProduct(1, 200, ['total_quantity' => 0, 'in_stock' => false]);
+        unset($row['description'], $row['description_short']);
+        Http::fake(['*/products*' => Http::response($this->page([$row]))]);
+
+        $this->artisan('mart:sync-catalog --quick')->assertSuccessful();
+
+        $product = Product::find(1);
+        $this->assertSame(['وصف', 0], [$product->description, $product->total_quantity]);
+        $this->assertEquals(240, $product->selling_price);
+        Http::assertSentCount(1); // no categories
+        Http::assertSent(fn ($request) => ! str_contains($request->url(), 'include='));
+    }
+
     public function test_failed_page_removes_nothing(): void
     {
         Sleep::fake();
@@ -84,6 +100,18 @@ class CatalogTest extends TestCase
 
         $this->assertNull(Product::find(2)->removed_at);
         $this->assertNotNull(Setting::get('sync_last_error'));
+    }
+
+    public function test_a_zero_cost_product_is_not_for_sale(): void
+    {
+        $free = Product::factory()->create(['cost_price' => 0]);
+
+        $this->assertFalse($free->isVisible());
+        $this->assertSame(0, Product::visible()->count());
+        $this->get('/products/'.$free->id)->assertNotFound();
+
+        $free->update(['price_override' => 10]); // the owner may still price it
+        $this->assertTrue($free->isVisible());
     }
 
     public function test_search_ignores_hamza_and_hides_hidden_products(): void

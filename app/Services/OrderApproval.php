@@ -54,6 +54,10 @@ class OrderApproval
         try {
             $figures = $this->checkout->martFigures($order, $freeShipping);
         } catch (MartException $e) {
+            if ($this->checkout->isStale($e)) {
+                $this->checkout->refreshProducts($order->items->pluck('product_id')->all());
+            }
+
             throw new CheckoutException($e->retryable()
                 ? __('admin.errors.mart_unreachable')
                 : __('admin.errors.mart_refused', ['code' => $e->errorCode, 'message' => $e->getMessage()]));

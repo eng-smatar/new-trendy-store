@@ -12,7 +12,7 @@ Sources: docs.mart.ps and its `openapi.json`, read-only and dry-run calls to the
 - **Rejected**: SQLite (web, queue and sync write concurrently).
 
 ## Catalogue sync
-- **Decision**: Full sync every 6 hours: `GET /products?limit=1000&include=description`, then mark products not seen as removed. Remove only after every page succeeded.
+- **Decision**: Quick pass every 15 minutes (`GET /products?limit=1000`: stock, status, prices) and a full pass with descriptions and categories every 6 hours. Either marks products not seen as removed, only after every page succeeded. About 2,000 requests a day of Mart's 20,000.
 - **Rationale**: ~19,000 products is about 20 requests. A full pass is the only way Mart exposes price changes, so incremental sync adds nothing.
 - **Rejected**: `updated_after` sync; per-product detail calls; events feed.
 
@@ -26,7 +26,8 @@ Sources: docs.mart.ps and its `openapi.json`, read-only and dry-run calls to the
 
 ## Pricing
 - **Decision**: `selling = override ?? round(cost × (1 + markup%), 2)`, never below cost; stored on the product and recalculated on sync or markup change. Initial markup 20% (owner to set).
-- **Rationale**: `public_price` never exceeded `group_price` in 500 sampled products, so it cannot serve as a retail price.
+- **Rationale**: In the sandbox `public_price` equals `group_price` for all 19,039 products (audited 2026-11-25), so there it cannot serve as a retail price, and any markup is above what mart.ps charges its own visitors. Mart documents `public_price` as a recommended retail price that can exceed `group_price`: check the live account before settling the markup.
+- **Stale prices**: a refusal such as `price_below_minimum` re-reads those products at once.
 
 ## Checkout and submission
 - **Decision**: Quote with `POST /orders/validate` before confirmation; store the order as `pending_review`. On approval keep the agreed unit prices while each is ≥ current cost and validate again; require new figures and customer acceptance only if that fails or the customer's total differs. Store the exact request body, then a queued job creates it, resending the same body and `partner_reference` on timeout or 5xx and honouring `Retry-After` on 429. Compare the created total with the accepted one.

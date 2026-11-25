@@ -100,8 +100,24 @@ class CheckoutTest extends TestCase
         $page = $this->fill(Product::factory()->create())->call('place');
 
         $this->assertSame(0, Order::count());
+        $this->assertArrayNotHasKey('expected_net', $page->get('confirmed'));
         $page->assertSet('shownTotal', 145.0)->call('place');
         $this->assertEquals(145, Order::sole()->customer_total);
+    }
+
+    public function test_stale_price_is_re_read_and_shown_before_ordering(): void
+    {
+        $product = Product::factory()->create(); // cost 100, sells 120
+        Http::fake([
+            '*/account' => Http::response(['data' => ['account' => ['free_shipping_allowed' => true]]]),
+            '*/orders/validate' => Http::response(['error' => ['code' => 'price_below_minimum']], 422),
+            '*/products?*' => Http::response(['data' => ['products' => [CatalogTest::martProduct($product->id, 150)]]]),
+        ]);
+
+        $this->fill($product)->call('place')->assertSet('notice', __('store.prices_updated'))->assertSet('shownTotal', 200.0);
+
+        $this->assertEquals(180, $product->fresh()->selling_price);
+        $this->assertSame(0, Order::count());
     }
 
     public function test_unreachable_mart_still_accepts_as_unverified(): void

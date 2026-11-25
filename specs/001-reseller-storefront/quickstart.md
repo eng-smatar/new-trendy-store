@@ -8,7 +8,7 @@
 composer install && npm install && npm run build
 php artisan migrate && php artisan storage:link
 php artisan make:filament-user
-php artisan mart:sync-towns && php artisan mart:sync-catalog
+php artisan mart:sync-towns && php artisan mart:sync-catalog   # the scheduler adds a quick pass every 15 min
 php artisan queue:work      # separate terminal
 php artisan schedule:work   # separate terminal
 php artisan test

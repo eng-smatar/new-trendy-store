@@ -45,12 +45,13 @@ class Product extends Model
 
     public function scopeVisible(Builder $query): void
     {
-        $query->where('mart_active', true)->where('hidden', false)->whereNull('removed_at');
+        // A zero price (Mart lists some at zero cost) would give the product away.
+        $query->where('mart_active', true)->where('hidden', false)->whereNull('removed_at')->where('selling_price', '>', 0);
     }
 
     public function isVisible(): bool
     {
-        return $this->mart_active && ! $this->hidden && $this->removed_at === null;
+        return $this->mart_active && ! $this->hidden && $this->removed_at === null && (float) $this->selling_price > 0;
     }
 
     public function combination(?int $id): ?array

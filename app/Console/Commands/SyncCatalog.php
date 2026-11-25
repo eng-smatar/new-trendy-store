@@ -10,12 +10,13 @@ use App\Services\Mart\MartClient;
 use App\Services\Mart\MartException;
 use App\Services\Pricing;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Sleep;
 use Throwable;
 
 class SyncCatalog extends Command
 {
-    protected $signature = 'mart:sync-catalog';
+    protected $signature = 'mart:sync-catalog {--quick : Stock and prices only, without categories or descriptions}';
 
     protected $description = 'Full sync of Mart categories and products';
 
@@ -23,14 +24,25 @@ class SyncCatalog extends Command
     {
         ini_set('memory_limit', '256M'); // 1,000 products with descriptions per page
 
+        // One catalogue pass at a time, whether quick, full or started from the admin.
+        $lock = Cache::lock('mart-sync-catalog', 600);
+
+        if (! $lock->get()) {
+            $this->info('Another catalogue sync is running.');
+
+            return self::SUCCESS;
+        }
+
         try {
-            $count = $this->sync($mart);
+            $count = $this->sync($mart, (bool) $this->option('quick'));
         } catch (Throwable $e) {
             Setting::set('sync_last_error', ['at' => now()->toIso8601String(), 'message' => $e->getMessage()]);
             report($e);
             $this->error($e->getMessage());
 
             return self::FAILURE;
+        } finally {
+            $lock->release();
         }
 
         Setting::set('sync_last_success', now()->toIso8601String());
@@ -39,19 +51,11 @@ class SyncCatalog extends Command
         return self::SUCCESS;
     }
 
-    private function sync(MartClient $mart): int
+    private function sync(MartClient $mart, bool $quick): int
     {
-        $categories = collect($this->fetch($mart, 'categories')['data']['categories'])->map(function (array $c) {
-            $parts = array_map('trim', explode('>', $c['category_name']));
-
-            return [
-                'id' => $c['category_id'],
-                'name' => implode(' > ', $parts),
-                'parent_path' => count($parts) > 1 ? implode(' > ', array_slice($parts, 0, -1)) : null,
-                'gender' => $c['gender'] ?? null,
-            ];
-        });
-        $categories->chunk(500)->each(fn ($chunk) => Category::upsert($chunk->values()->all(), ['id']));
+        if (! $quick) {
+            $this->syncCategories($mart);
+        }
 
         $overrides = Product::whereNotNull('price_override')->pluck('price_override', 'id');
         $markup = (float) Setting::get('markup_percent');
@@ -60,7 +64,7 @@ class SyncCatalog extends Command
         $page = 1;
 
         do {
-            $response = $this->fetch($mart, 'products', ['page' => $page++, 'limit' => 1000, 'include' => 'description']);
+            $response = $this->fetch($mart, 'products', ['page' => $page++, 'limit' => 1000] + ($quick ? [] : ['include' => 'description']));
 
             $rows = array_map(function (array $p) use ($overrides, $markup, $now) {
                 $cost = (float) $p['price']['group_price'];
@@ -91,9 +95,11 @@ class SyncCatalog extends Command
                 ];
             }, $response['data']['products']);
 
-            // price_override, hidden, featured and created_at are never overwritten.
+            // price_override, hidden, featured and created_at are never overwritten;
+            // a quick pass has no descriptions, so it leaves those alone too.
             if ($rows) {
-                Product::upsert($rows, ['id'], array_values(array_diff(array_keys($rows[0]), ['id', 'created_at'])));
+                $keep = ['id', 'created_at', ...($quick ? ['description', 'description_short'] : [])];
+                Product::upsert($rows, ['id'], array_values(array_diff(array_keys($rows[0]), $keep)));
             }
             array_push($seen, ...array_column($rows, 'id'));
         } while ($response['meta']['pagination']['has_next'] ?? false);
@@ -103,7 +109,25 @@ class SyncCatalog extends Command
             Product::whereNull('removed_at')->whereNotIn('id', $seen)->update(['removed_at' => $now]);
         }
 
+        // A price override or markup saved while pages were loading must win.
+        Pricing::recalculate();
+
         return count($seen);
+    }
+
+    private function syncCategories(MartClient $mart): void
+    {
+        $categories = collect($this->fetch($mart, 'categories')['data']['categories'])->map(function (array $c) {
+            $parts = array_map('trim', explode('>', $c['category_name']));
+
+            return [
+                'id' => $c['category_id'],
+                'name' => implode(' > ', $parts),
+                'parent_path' => count($parts) > 1 ? implode(' > ', array_slice($parts, 0, -1)) : null,
+                'gender' => $c['gender'] ?? null,
+            ];
+        });
+        $categories->chunk(500)->each(fn ($chunk) => Category::upsert($chunk->values()->all(), ['id']));
     }
 
     private function fetch(MartClient $mart, string $path, array $query = []): array
