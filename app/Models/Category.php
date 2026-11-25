@@ -13,10 +13,18 @@ class Category extends Model
 
     protected $guarded = [];
 
-    /** Last segment of Mart's "a > b > c" path. */
+    /** The admin's Arabic name, else the built-in one, else Mart's English. */
     public function label(): string
     {
-        return trim(last(explode('>', $this->name)));
+        return $this->name_ar ?: $this->defaultLabel();
+    }
+
+    /** Built-in Arabic name for the last segment of Mart's "a > b > c" path. */
+    public function defaultLabel(): string
+    {
+        $segment = trim(last(explode('>', $this->name)));
+
+        return trans('categories', [], 'ar')[$segment] ?? $segment;
     }
 
     /** Categories that have no ancestor in the list. */

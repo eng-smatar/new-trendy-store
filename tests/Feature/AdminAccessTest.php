@@ -17,7 +17,7 @@ class AdminAccessTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const PAGES = ['/admin', '/admin/orders', '/admin/products', '/admin/manage-settings'];
+    private const PAGES = ['/admin', '/admin/orders', '/admin/products', '/admin/categories', '/admin/manage-settings'];
 
     public function test_guests_cannot_reach_any_admin_page(): void
     {

@@ -150,6 +150,7 @@ The owner changes how the website looks and behaves from a settings area in the 
 - **FR-026**: Districts and towns offered MUST be those Mart currently accepts, refreshed at least daily.
 - **FR-027**: Each order MUST keep the address, district and town names, the town's identifier, prices and delivery fee as last accepted by the customer; later catalogue or rate changes do not alter it.
 - **FR-028**: The storefront's visual direction (colours, type, spacing, components and page layouts for a phone first) MUST be defined before its pages are built and applied consistently.
+- **FR-029**: Categories MUST be shown with Arabic names, with built-in defaults that an administrator can change.
 
 ### Key Entities
 

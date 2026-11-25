@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\Catalog;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Services\Pricing;
@@ -100,6 +101,24 @@ class CatalogTest extends TestCase
 
         Livewire::test(Catalog::class)->call('nextPage')->assertSet('paginators.page', 2)
             ->set('available', true)->assertSet('paginators.page', 1);
+    }
+
+    public function test_categories_show_arabic_names_and_sync_keeps_the_admins_own(): void
+    {
+        $shoes = Category::create(['id' => 9, 'name' => "clothing & accessories > shoes & footwear > men's shoes"]);
+        $new = Category::create(['id' => 10, 'name' => 'a > something new']);
+        $this->assertSame('أحذية رجالية', $shoes->label());
+        $this->assertSame('something new', $new->label());
+
+        $shoes->update(['name_ar' => 'أحذية الرجال']);
+        Http::fake([
+            '*/categories' => Http::response(['data' => ['categories' => [['category_id' => 9, 'category_name' => $shoes->name]]]]),
+            '*/products*' => Http::response($this->page([])),
+        ]);
+        $this->artisan('mart:sync-catalog')->assertSuccessful();
+
+        $this->assertSame('أحذية الرجال', Category::find(9)->label());
+        $this->get('/categories/9')->assertSee('أحذية الرجال');
     }
 
     public function test_description_scripts_are_removed(): void

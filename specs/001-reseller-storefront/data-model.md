@@ -3,7 +3,7 @@
 Money: `decimal(10,2)` ILS. Mart ids are kept as given.
 
 ## categories
-`id` (Mart category_id), `name` (full path), `parent_path` (nullable), `gender`.
+`id` (Mart category_id), `name` (full path), `parent_path` (nullable), `gender`, `name_ar` (nullable, admin's own; never overwritten by sync). Shown name: `name_ar`, else `lang/ar/categories.php` by last path segment, else Mart's English.
 
 ## products
 `id` (Mart product_id), `reference`, `name`, `description`, `description_short`, `category_id?`, `brand_name?`, `cost_price` (group_price), `price_override?`, `selling_price`, `images` (json), `cover_image`, `combinations` (json: id, available_quantity, attributes, images), `total_quantity`, `search_text`, `mart_active`, `hidden` (default false), `featured` (default false), `removed_at?`, `synced_at`.

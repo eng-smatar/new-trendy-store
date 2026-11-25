@@ -125,6 +125,11 @@ return [
         'available' => 'Available',
         'reversed' => 'Reversed',
     ],
+    'category' => 'Category',
+    'categories' => 'Categories',
+    'mart_name' => 'Mart name',
+    'default_name' => 'Default Arabic name',
+    'name_ar' => 'Your Arabic name (optional)',
     'errors' => [
         'check_in_mart' => 'Check this order in Mart first.',
         'product_gone' => '":name" is no longer available.',

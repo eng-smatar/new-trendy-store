@@ -125,6 +125,11 @@ return [
         'available' => 'متاح',
         'reversed' => 'أُلغي',
     ],
+    'category' => 'قسم',
+    'categories' => 'الأقسام',
+    'mart_name' => 'الاسم في مارت',
+    'default_name' => 'الاسم الافتراضي',
+    'name_ar' => 'اسمك العربي (اختياري)',
     'errors' => [
         'check_in_mart' => 'تحقق من هذا الطلب في مارت أولاً.',
         'product_gone' => 'المنتج «:name» لم يعد متوفراً.',
