@@ -4,9 +4,11 @@ namespace Tests\Feature;
 
 use App\Livewire\Catalog;
 use App\Livewire\Home;
+use App\Livewire\ProductPage;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Services\Cart;
 use App\Services\Pricing;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -153,6 +155,17 @@ class CatalogTest extends TestCase
         $slides = Livewire::test(Home::class)->viewData('slides');
 
         $this->assertSame([$ok->id], $slides->pluck('id')->all());
+    }
+
+    public function test_adding_to_cart_toasts_and_never_exceeds_stock(): void
+    {
+        $product = Product::factory()->create(['total_quantity' => 2]);
+
+        Livewire::test(ProductPage::class, ['id' => $product->id])
+            ->set('quantity', 2)->call('addToCart')->assertDispatched('toast')->assertDispatched('cart-updated')
+            ->set('quantity', 1)->call('addToCart')->assertNotDispatched('toast')->assertSee(__('store.not_enough_stock'));
+
+        $this->assertSame([$product->id.':' => 2], app(Cart::class)->raw());
     }
 
     public function test_description_scripts_are_removed(): void

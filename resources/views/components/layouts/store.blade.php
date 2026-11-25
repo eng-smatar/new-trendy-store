@@ -41,5 +41,7 @@
     </main>
 
     <x-store-footer />
+    <x-back-to-top />
+    <x-toast />
 </body>
 </html>

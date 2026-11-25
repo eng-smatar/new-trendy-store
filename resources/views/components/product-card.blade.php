@@ -1,5 +1,5 @@
 @props(['product'])
-<a href="{{ url('/products/'.$product->id) }}" class="card flex h-full flex-col overflow-hidden transition hover:shadow-md">
+<a href="{{ url('/products/'.$product->id) }}" class="card lift flex h-full flex-col overflow-hidden hover:shadow-lg">
     <div class="aspect-square bg-stone-100">
         @if ($product->cover_image)
             <img src="{{ $product->cover_image }}" alt="{{ $product->name }}" loading="lazy" class="size-full object-cover">

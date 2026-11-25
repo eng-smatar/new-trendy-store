@@ -21,9 +21,16 @@
                             <p class="error" role="alert">{{ __('store.line_unavailable') }}</p>
                         @endunless
                         <div class="flex items-center gap-2">
-                            <label class="sr-only" for="qty-{{ $line['key'] }}">{{ __('store.quantity') }}</label>
-                            <input id="qty-{{ $line['key'] }}" type="number" min="1" max="99" value="{{ $line['quantity'] }}"
-                                   wire:change="setQuantity('{{ $line['key'] }}', $event.target.value)" class="field w-24">
+                            <div class="flex items-center rounded-xl border border-stone-300 bg-white">
+                                <button type="button" class="grid size-11 place-items-center text-xl disabled:opacity-30" aria-label="{{ __('store.decrease') }}"
+                                        wire:click="setQuantity('{{ $line['key'] }}', {{ $line['quantity'] - 1 }})" @disabled($line['quantity'] <= 1)>−</button>
+                                <label class="sr-only" for="qty-{{ $line['key'] }}">{{ __('store.quantity') }}</label>
+                                {{-- wire:key: a fresh input shows the new quantity after the buttons are used. --}}
+                                <input wire:key="qty-{{ $line['key'] }}-{{ $line['quantity'] }}" id="qty-{{ $line['key'] }}" type="number" min="1" max="99" value="{{ $line['quantity'] }}"
+                                       wire:change="setQuantity('{{ $line['key'] }}', $event.target.value)" class="h-11 w-12 [appearance:textfield] bg-transparent text-center [&::-webkit-inner-spin-button]:appearance-none">
+                                <button type="button" class="grid size-11 place-items-center text-xl disabled:opacity-30" aria-label="{{ __('store.increase') }}"
+                                        wire:click="setQuantity('{{ $line['key'] }}', {{ $line['quantity'] + 1 }})" @disabled($line['quantity'] >= 99)>+</button>
+                            </div>
                             <button type="button" wire:click="remove('{{ $line['key'] }}')" class="btn-ghost">{{ __('store.remove') }}</button>
                         </div>
                     </div>

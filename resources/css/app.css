@@ -30,3 +30,50 @@
 }
 
 :focus-visible { outline: 3px solid var(--brand, #3f2878); outline-offset: 2px; }
+
+/* Motion: opt-in only, so "reduce motion" users get the static page. */
+@media (prefers-reduced-motion: no-preference) {
+    /* Cross-fade between pages (Chrome, Edge, Safari; others navigate as usual). */
+    @view-transition { navigation: auto; }
+
+    .btn-primary, .btn-ghost { transition: scale 0.1s, filter 0.2s, background-color 0.2s, border-color 0.2s; }
+    .btn-primary:active:not(:disabled), .btn-ghost:active:not(:disabled) { scale: 0.97; }
+
+    .lift { transition: translate 0.2s ease-out, box-shadow 0.2s ease-out; }
+    .lift img { transition: scale 0.4s ease-out; }
+    @media (hover: hover) {
+        .lift:hover { translate: 0 -4px; }
+        .lift:hover img { scale: 1.06; }
+    }
+
+    /* Products rise in as they scroll into view; without support they are simply visible. */
+    @supports (animation-timeline: view()) {
+        .reveal {
+            animation: reveal linear both;
+            animation-timeline: view();
+            animation-range: entry 0% entry 35%;
+        }
+    }
+
+    .bump { animation: bump 0.45s ease; }
+
+    .toast {
+        transition: opacity 0.25s, translate 0.25s, display 0.25s, overlay 0.25s;
+        transition-behavior: allow-discrete;
+        opacity: 0;
+        translate: 0 1rem;
+    }
+    .toast:popover-open { opacity: 1; translate: 0 0; }
+    @starting-style {
+        .toast:popover-open { opacity: 0; translate: 0 1rem; }
+    }
+}
+
+@keyframes reveal { from { opacity: 0; translate: 0 1.5rem; } }
+@keyframes bump { 40% { scale: 1.35; } }
+
+/* Room under the footer for the phone buy bar. */
+@media (width < 48rem) {
+    body:has(.sticky-buy) { padding-bottom: 4.5rem; }
+}
+

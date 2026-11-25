@@ -1,4 +1,4 @@
-<div class="space-y-10">
+<div class="space-y-10" x-data="{ atButton: true }">
     <div class="grid gap-6 md:grid-cols-2">
         <div wire:key="gallery-{{ $combinationId }}" x-data="{ current: 0 }">
             <div class="card aspect-square overflow-hidden bg-stone-100">
@@ -41,17 +41,22 @@
                 {{ $stock > 0 ? __('store.in_stock') : __('store.out_of_stock') }}
             </p>
 
-            <div class="flex gap-2">
-                <label for="quantity" class="sr-only">{{ __('store.quantity') }}</label>
-                <input id="quantity" type="number" min="1" max="99" wire:model.number="quantity" class="field w-24">
-                <button type="button" wire:click="addToCart" wire:loading.attr="disabled" class="btn-primary flex-1" @disabled($stock < 1)>{{ __('store.add_to_cart') }}</button>
+            <div class="flex gap-2" x-intersect:enter="atButton = true" x-intersect:leave="atButton = false">
+                <div class="flex items-center rounded-xl border border-stone-300 bg-white">
+                    <button type="button" class="grid size-11 place-items-center text-xl" aria-label="{{ __('store.decrease') }}"
+                            x-on:click="$wire.quantity = Math.max(1, Number($wire.quantity) - 1)">−</button>
+                    <label for="quantity" class="sr-only">{{ __('store.quantity') }}</label>
+                    <input id="quantity" type="number" min="1" max="99" wire:model.number="quantity" class="h-11 w-12 [appearance:textfield] bg-transparent text-center [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" class="grid size-11 place-items-center text-xl" aria-label="{{ __('store.increase') }}"
+                            x-on:click="$wire.quantity = Math.min(99, Number($wire.quantity) + 1)">+</button>
+                </div>
+                <button type="button" wire:click="addToCart" wire:loading.attr="disabled" class="btn-primary flex-1" @disabled($stock < 1)>
+                    <span wire:loading wire:target="addToCart" class="size-4 rounded-full border-2 border-white/40 border-t-white motion-safe:animate-spin" aria-hidden="true"></span>
+                    {{ __('store.add_to_cart') }}
+                </button>
             </div>
 
-            <p role="status" class="text-sm">
-                @if ($message)
-                    {{ $message }} <a href="{{ url('/cart') }}" class="font-bold text-brand underline">{{ __('store.view_cart') }}</a>
-                @endif
-            </p>
+            <p role="status" class="error">{{ $message }}</p>
 
             @if ($product->description_short)
                 <div class="rich" dir="auto">{!! str($product->description_short)->sanitizeHtml() !!}</div>
@@ -71,5 +76,14 @@
             <h2 class="mb-4 text-xl font-bold">{{ __('store.related') }}</h2>
             <x-product-grid :products="$related" />
         </section>
+    @endif
+
+    {{-- Phones: keep buying one tap away once the main button has scrolled off. --}}
+    @if ($stock > 0)
+        <div class="sticky-buy fixed inset-x-0 bottom-0 z-30 flex items-center gap-3 border-t border-stone-200 bg-white p-3 shadow-2xl md:hidden"
+             x-show="! atButton" x-cloak x-transition.opacity style="display: none">
+            <x-price :amount="$product->selling_price" class="text-lg font-bold text-brand" />
+            <button type="button" wire:click="addToCart" wire:loading.attr="disabled" class="btn-primary flex-1">{{ __('store.add_to_cart') }}</button>
+        </div>
     @endif
 </div>

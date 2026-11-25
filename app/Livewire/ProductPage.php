@@ -41,8 +41,9 @@ class ProductPage extends Component
         }
 
         $cart->add($product->id, $this->combinationId, $quantity);
-        $this->message = __('store.added');
+        $this->message = '';
         $this->dispatch('cart-updated');
+        $this->dispatch('toast', message: __('store.added'));
     }
 
     public function render()

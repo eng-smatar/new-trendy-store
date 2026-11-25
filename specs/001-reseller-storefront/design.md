@@ -23,3 +23,7 @@ Product card: square image, two-line name, price, "out of stock" badge.
 
 ## States
 Loading: dimmed content with `wire:loading`. Empty: one sentence and a link onward. Error: plain Arabic message beside the field or at the top, announced to screen readers.
+
+## Motion and interaction
+Short and quiet; all movement is off under "reduce motion". Page cross-fade, card lift and image zoom (pointer devices), products rising in on scroll, button press, cart count bump, "added" toast, quantity steppers, sticky add-to-cart bar on phones, back-to-top. CSS and the Alpine bundled with Livewire; no animation library.
+
