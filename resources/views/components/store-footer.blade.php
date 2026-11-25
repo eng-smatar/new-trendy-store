@@ -3,7 +3,7 @@
 @use(App\Models\Town)
 @php
     $storeName = Setting::get('store_name');
-    $categories = Category::whereIn('name', config('store.footer_categories'))->get()
+    $categories = Category::listed()->whereIn('name', config('store.footer_categories'))->get()
         ->sortBy(fn ($c) => array_search($c->name, config('store.footer_categories')));
 
     // The fees Mart really charges today, per zone, with the admin's free-delivery thresholds.

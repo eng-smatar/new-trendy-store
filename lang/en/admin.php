@@ -78,6 +78,7 @@ return [
     'saved' => 'Saved',
     'whatsapp_help' => 'Digits only, with country code',
     'tabs' => [
+        'listing' => 'Product listing',
         'ordering' => 'Ordering',
         'shipping' => 'Shipping',
         'identity' => 'Identity',
@@ -92,6 +93,8 @@ return [
         'Isreal' => 'Free delivery from (48 areas)',
     ],
     'fields' => [
+        'listing_min_profit' => 'Minimum profit per item',
+        'listing_categories' => 'Categories to list',
         'footer_text' => 'Footer description',
         'store_name' => 'Store name',
         'logo' => 'Logo',
@@ -128,6 +131,9 @@ return [
     'mart_name' => 'Mart name',
     'default_name' => 'Default Arabic name',
     'name_ar' => 'Your Arabic name (optional)',
+    'listed_now' => ':count of :total sellable products are listed in the store now.',
+    'listing_min_profit_help' => 'Profit is selling price minus cost. 0 means no filter.',
+    'listing_categories_help' => 'Choosing a category includes its subcategories. Leave empty to list everything.',
     'errors' => [
         'check_in_mart' => 'Check this order in Mart first.',
         'product_gone' => '":name" is no longer available.',

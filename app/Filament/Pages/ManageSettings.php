@@ -2,12 +2,15 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Category;
+use App\Models\Product;
 use App\Models\Setting;
 use App\Services\Pricing;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -15,6 +18,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Schema;
 
 class ManageSettings extends Page
@@ -29,6 +33,7 @@ class ManageSettings extends Page
         'announcement',
         'page_about', 'page_delivery', 'page_privacy', 'page_terms',
         'seo_title', 'seo_description', 'seo_image',
+        'listing_min_profit', 'listing_categories',
         'ordering_enabled', 'closed_message', 'min_order_amount', 'markup_percent',
         'free_from', 'delivery_estimate',
     ];
@@ -66,6 +71,17 @@ class ManageSettings extends Page
                     $text('closed_message', 300)->required(),
                     $money('min_order_amount', __('admin.fields.min_order_amount')),
                     $money('markup_percent', __('admin.fields.markup_percent'))->suffix('%')->maxValue(1000),
+                ]),
+                Tab::make(__('admin.tabs.listing'))->schema([
+                    Text::make(fn () => __('admin.listed_now', [
+                        'count' => number_format(Product::visible()->count()),
+                        'total' => number_format(Product::sellable()->count()),
+                    ])),
+                    $money('listing_min_profit', __('admin.fields.listing_min_profit'))->prefix('₪')
+                        ->helperText(__('admin.listing_min_profit_help')),
+                    Select::make('listing_categories')->label(__('admin.fields.listing_categories'))
+                        ->multiple()->searchable()->options(fn () => self::categoryOptions())
+                        ->helperText(__('admin.listing_categories_help')),
                 ]),
                 Tab::make(__('admin.tabs.shipping'))->schema([
                     $money('free_from.default', __('admin.zones.default')),
@@ -113,6 +129,27 @@ class ManageSettings extends Page
         ]);
     }
 
+    /** Full path of every category, in the panel's language. */
+    private static function categoryOptions(): array
+    {
+        $all = Category::orderBy('name')->get()->keyBy('name');
+
+        return $all->mapWithKeys(function (Category $category) use ($all) {
+            if (app()->getLocale() !== 'ar') {
+                return [$category->id => $category->name];
+            }
+
+            $parts = explode(' > ', $category->name);
+            $labels = array_map(function (int $i) use ($parts, $all) {
+                $path = implode(' > ', array_slice($parts, 0, $i + 1));
+
+                return ($all->get($path) ?? new Category(['name' => $path]))->label();
+            }, array_keys($parts));
+
+            return [$category->id => implode(' › ', $labels)];
+        })->all();
+    }
+
     /** WCAG contrast of white text on this colour is at least 4.5:1. */
     public static function readableUnderWhite(string $hex): bool
     {
@@ -136,7 +173,7 @@ class ManageSettings extends Page
 
         foreach (self::KEYS as $key) {
             $value = $data[$key] ?? null;
-            Setting::set($key, $key === 'social_links' ? array_values($value ?? []) : $value);
+            Setting::set($key, in_array($key, ['social_links', 'listing_categories'], true) ? array_values($value ?? []) : $value);
         }
 
         if ((float) Setting::get('markup_percent') !== $oldMarkup) {

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\ManageSettings;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Town;
@@ -65,6 +66,42 @@ class SettingsTest extends TestCase
             ->assertSee(__('store.free_from', ['amount' => '1,000']))
             ->assertDontSee(__('store.zones.default').':')
             ->assertSee('instagram.com/trendy.windy.79', false)->assertSee('aria-label="TikTok"', false);
+    }
+
+    public function test_listing_filters_by_profit_and_category(): void
+    {
+        $this->admin();
+        Category::create(['id' => 1, 'name' => 'home']);
+        Category::create(['id' => 2, 'name' => 'home > lamps', 'parent_path' => 'home']);
+        Category::create(['id' => 3, 'name' => 'electronics']);
+        $big = Product::factory()->create(['category_id' => 2]);                     // profit 20
+        $small = Product::factory()->create(['category_id' => 2, 'cost_price' => 50]); // profit 10
+        $other = Product::factory()->create(['category_id' => 3]);
+        $none = Product::factory()->create(['category_id' => null]);
+        $listed = fn () => Product::visible()->orderBy('id')->pluck('id')->all();
+        $ids = fn (Product ...$products) => collect($products)->pluck('id')->sort()->values()->all();
+
+        $this->assertSame($ids($big, $small, $other, $none), $listed());
+
+        Livewire::test(ManageSettings::class)
+            ->set('data.listing_min_profit', 20)->set('data.listing_categories', [1])
+            ->call('save')->assertHasNoFormErrors();
+
+        $this->assertSame($ids($big), $listed()); // parent category covers its child; exactly 20 passes
+        $this->get('/products/'.$big->id)->assertOk();
+        $this->get('/products/'.$small->id)->assertNotFound();
+        $this->get('/products/'.$other->id)->assertNotFound();
+        $this->assertSame([1], Category::roots()->pluck('id')->all());
+        $this->assertTrue($small->isSellable()); // so an order already placed can still be approved
+    }
+
+    public function test_unknown_category_and_negative_profit_are_rejected(): void
+    {
+        $this->admin();
+
+        Livewire::test(ManageSettings::class)
+            ->set('data.listing_min_profit', -1)->set('data.listing_categories', [999])
+            ->call('save')->assertHasFormErrors(['listing_min_profit', 'listing_categories.0']);
     }
 
     public function test_page_html_is_sanitised(): void

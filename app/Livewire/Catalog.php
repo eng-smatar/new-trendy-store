@@ -76,7 +76,7 @@ class Catalog extends Component
         return view('livewire.catalog', [
             'category' => $category,
             'subcategories' => $category
-                ? Category::where('parent_path', $category->name)->orderBy('name')->get()
+                ? Category::listed()->where('parent_path', $category->name)->orderBy('name')->get()
                 : collect(),
             'products' => $products->orderByDesc('id')->paginate(24),
         ])->title($category?->label() ?? __('store.search'));

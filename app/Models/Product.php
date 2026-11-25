@@ -43,15 +43,36 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
-    public function scopeVisible(Builder $query): void
+    /** Could be ordered from Mart and the owner has not hidden it. */
+    public function scopeSellable(Builder $query): void
     {
         // A zero price (Mart lists some at zero cost) would give the product away.
         $query->where('mart_active', true)->where('hidden', false)->whereNull('removed_at')->where('selling_price', '>', 0);
     }
 
+    /** What shoppers see: sellable and within the listing filters in settings. */
+    public function scopeVisible(Builder $query): void
+    {
+        $query->sellable();
+
+        if (($minProfit = (float) Setting::get('listing_min_profit')) > 0) {
+            // CAST: bound decimals arrive as text, which SQLite would not compare as numbers.
+            $query->whereRaw('ROUND(selling_price - cost_price, 2) >= CAST(? AS DECIMAL(10,2))', [$minProfit]);
+        }
+
+        if (($categoryIds = Category::listedIds()) !== null) {
+            $query->whereIn('category_id', $categoryIds);
+        }
+    }
+
+    public function isSellable(): bool
+    {
+        return static::sellable()->whereKey($this->getKey())->exists();
+    }
+
     public function isVisible(): bool
     {
-        return $this->mart_active && ! $this->hidden && $this->removed_at === null && (float) $this->selling_price > 0;
+        return static::visible()->whereKey($this->getKey())->exists();
     }
 
     public function combination(?int $id): ?array

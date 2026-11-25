@@ -38,7 +38,7 @@ class OrderApproval
                 $item->unit_price = round((float) $prices[$item->id], 2);
             }
 
-            if (! $item->product?->isVisible()) {
+            if (! $item->product?->isSellable()) {
                 throw new CheckoutException(__('admin.errors.product_gone', ['name' => $item->name]));
             }
 

@@ -151,6 +151,7 @@ The owner changes how the website looks and behaves from a settings area in the 
 - **FR-027**: Each order MUST keep the address, district and town names, the town's identifier, prices and delivery fee as last accepted by the customer; later catalogue or rate changes do not alter it.
 - **FR-028**: The storefront's visual direction (colours, type, spacing, components and page layouts for a phone first) MUST be defined before its pages are built and applied consistently.
 - **FR-029**: Categories MUST be shown with Arabic names, with built-in defaults that an administrator can change.
+- **FR-030**: Administrators MUST be able to limit which products are listed to those with at least a chosen profit per item (selling price minus cost) and to chosen categories including their subcategories. Orders already placed are not affected.
 
 ### Key Entities
 

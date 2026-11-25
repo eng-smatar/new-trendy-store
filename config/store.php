@@ -13,6 +13,9 @@ return [
             ['label' => 'Facebook', 'url' => 'https://www.facebook.com/Trendy.Windy.Online'],
             ['label' => 'TikTok', 'url' => 'https://www.tiktok.com/@trendy.windy.online'],
         ],
+        // Which products shoppers see: minimum profit in ILS, and category ids (empty = all).
+        'listing_min_profit' => 0,
+        'listing_categories' => [],
         'main_color' => '#3f2878',
         'ordering_enabled' => true,
         'closed_message' => 'استقبال الطلبات متوقف حالياً.',

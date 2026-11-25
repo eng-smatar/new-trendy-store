@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\ArabicText;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -51,10 +52,31 @@ class Category extends Model
         });
     }
 
-    /** Categories that have no ancestor in the list. */
+    /**
+     * Ids the admin chose to list, with their subcategories. Null means every category.
+     *
+     * @return Collection<int, int>|null
+     */
+    public static function listedIds(): ?Collection
+    {
+        $chosen = array_filter((array) Setting::get('listing_categories'));
+
+        return $chosen
+            ? static::findMany($chosen)->flatMap(fn (self $category) => $category->branchIds())->unique()->values()
+            : null;
+    }
+
+    public function scopeListed(Builder $query): void
+    {
+        if (($ids = static::listedIds()) !== null) {
+            $query->whereIn('id', $ids);
+        }
+    }
+
+    /** Listed categories that have no listed ancestor. */
     public static function roots(): Collection
     {
-        $all = static::orderBy('name')->get();
+        $all = static::listed()->orderBy('name')->get();
         $names = $all->pluck('name')->flip();
 
         return $all->reject(function (self $category) use ($names) {
