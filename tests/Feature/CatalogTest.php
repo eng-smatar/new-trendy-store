@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\Catalog;
+use App\Livewire\Home;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
@@ -136,6 +137,22 @@ class CatalogTest extends TestCase
         Category::find(1)->update(['name_ar' => 'روائح']);
         Livewire::test(Catalog::class)->set('q', 'روائح')->assertSee('Oud 100ml');
         Livewire::test(Catalog::class)->set('q', 'روائح hammer')->assertDontSee('Oud 100ml');
+    }
+
+    public function test_home_slider_shows_only_products_that_can_be_bought(): void
+    {
+        $image = ['cover_image' => 'https://img.test/a.jpg'];
+        $ok = Product::factory()->create($image);
+        // Hidden, out of stock, and without a picture.
+        [
+            Product::factory()->create($image + ['hidden' => true]),
+            Product::factory()->create($image + ['total_quantity' => 0]),
+            Product::factory()->create(),
+        ];
+
+        $slides = Livewire::test(Home::class)->viewData('slides');
+
+        $this->assertSame([$ok->id], $slides->pluck('id')->all());
     }
 
     public function test_description_scripts_are_removed(): void

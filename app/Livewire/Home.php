@@ -15,7 +15,8 @@ class Home extends Component
     {
         return view('livewire.home', [
             'announcement' => Setting::get('announcement'),
-            'banners' => (array) Setting::get('banners'),
+            // A new random pick on every visit.
+            'slides' => Product::visible()->where('total_quantity', '>', 0)->whereNotNull('cover_image')->inRandomOrder()->limit(5)->get(),
             'categories' => Category::roots(),
             'featured' => Product::visible()->where('featured', true)->orderByDesc('id')->limit(8)->get(),
             'arrivals' => Product::visible()->where('total_quantity', '>', 0)->orderByDesc('id')->limit(12)->get(),

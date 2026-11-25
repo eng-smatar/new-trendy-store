@@ -26,7 +26,7 @@ class ManageSettings extends Page
     public const KEYS = [
         'store_name', 'logo', 'icon', 'main_color',
         'contact_phone', 'whatsapp', 'contact_email', 'contact_address', 'social_links',
-        'banners', 'announcement',
+        'announcement',
         'page_about', 'page_delivery', 'page_privacy', 'page_terms',
         'seo_title', 'seo_description', 'seo_image',
         'ordering_enabled', 'closed_message', 'min_order_amount', 'markup_percent',
@@ -97,11 +97,6 @@ class ManageSettings extends Page
                 ]),
                 Tab::make(__('admin.tabs.home'))->schema([
                     $text('announcement', 200),
-                    Repeater::make('banners')->label(__('admin.fields.banners'))->maxItems(5)->defaultItems(0)->schema([
-                        $image('image')->label(__('admin.fields.image'))->required(),
-                        TextInput::make('alt')->label(__('admin.fields.alt'))->required()->maxLength(120),
-                        $url('link')->label(__('admin.fields.url')),
-                    ]),
                 ]),
                 Tab::make(__('admin.tabs.pages'))->schema(array_map(
                     fn (string $page) => RichEditor::make("page_$page")->label(__("admin.fields.page_$page"))
@@ -140,7 +135,7 @@ class ManageSettings extends Page
 
         foreach (self::KEYS as $key) {
             $value = $data[$key] ?? null;
-            Setting::set($key, in_array($key, ['banners', 'social_links'], true) ? array_values($value ?? []) : $value);
+            Setting::set($key, $key === 'social_links' ? array_values($value ?? []) : $value);
         }
 
         if ((float) Setting::get('markup_percent') !== $oldMarkup) {
