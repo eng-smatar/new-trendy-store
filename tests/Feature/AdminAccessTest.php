@@ -51,6 +51,13 @@ class AdminAccessTest extends TestCase
             ->sortTable('profit', 'asc')->assertCanSeeTableRecords([$none, $small, $big], inOrder: true);
     }
 
+    public function test_horizon_dashboard_needs_a_signed_in_admin(): void
+    {
+        $this->get('/horizon')->assertForbidden(); // outside the local environment
+
+        $this->actingAs(User::factory()->create())->get('/horizon')->assertOk();
+    }
+
     public function test_override_below_cost_is_rejected(): void
     {
         $this->actingAs(User::factory()->create());

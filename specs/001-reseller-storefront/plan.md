@@ -12,7 +12,7 @@ One Laravel application: an Arabic RTL storefront, a bilingual Filament admin pa
 
 **Primary Dependencies**: Laravel 13, Filament 5 (admin), Livewire 4 (storefront interactivity, ships with Filament), Tailwind CSS via Vite
 
-**Storage**: MySQL; sessions, cache and queue on the database driver; uploads on the public disk; product images linked from Mart
+**Storage**: MySQL; sessions and cache on the database driver; queues on Redis with Horizon; uploads on the public disk; product images linked from Mart
 
 **Testing**: PHPUnit (Laravel default) with `Http::fake`; manual sandbox run per [quickstart.md](quickstart.md)
 
