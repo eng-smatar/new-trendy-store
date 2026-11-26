@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Filament\Auth\RequestPasswordReset;
 use App\Models\User;
-use Filament\Auth\Notifications\ResetPassword;
+use App\Notifications\ResetPassword;
 use Filament\Auth\Pages\PasswordReset\ResetPassword as ResetPasswordPage;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification as Toast;
@@ -12,6 +12,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -37,7 +39,34 @@ class PasswordResetTest extends TestCase
         Notification::assertNothingSent();
 
         $this->ask($admin->email);
-        Notification::assertSentTo($admin, ResetPassword::class, fn (ResetPassword $n) => str_contains($n->url, '/admin/password-reset/reset'));
+        Notification::assertSentTo($admin, ResetPassword::class, fn (ResetPassword $n) => str_contains($n->toMail($admin)->actionUrl, '/admin/password-reset/reset'));
+    }
+
+    public function test_emailed_link_opens_whatever_scheme_or_host_php_sees(): void
+    {
+        $admin = User::factory()->create();
+        $url = (new ResetPassword('token'))->toMail($admin)->actionUrl;
+        $path = substr($url, strlen(url('/')));
+
+        // As a proxy might deliver it: other scheme, other host.
+        foreach ([$url, 'https://localhost'.$path, 'http://internal:8080'.$path] as $address) {
+            $this->get($address)->assertOk();
+        }
+
+        $this->get(str_replace('token=token', 'token=other', $url))->assertForbidden();
+        $this->get(str_replace(urlencode($admin->email), urlencode('x@y.test'), $url))->assertForbidden();
+        $this->get(url('/admin/password-reset/reset?email=a%40b.test&token=t'))->assertForbidden(); // unsigned
+    }
+
+    public function test_any_signed_route_accepts_a_relative_signature(): void
+    {
+        Route::middleware(['web', 'signed'])->get('/signed-check/{id}', fn () => 'ok')->name('signed.check');
+        Route::getRoutes()->refreshNameLookups();
+        $relative = URL::signedRoute('signed.check', ['id' => 5], absolute: false);
+
+        $this->get('https://localhost'.$relative)->assertOk();
+        $this->get(str_replace('/5?', '/6?', $relative))->assertForbidden();
+        $this->get(URL::signedRoute('signed.check', ['id' => 5]))->assertForbidden(); // absolute signing is not accepted
     }
 
     public function test_the_link_sets_a_new_password_once(): void
@@ -57,9 +86,7 @@ class PasswordResetTest extends TestCase
     public function test_reset_email_is_arabic_and_right_to_left_for_an_arabic_admin(): void
     {
         app()->setLocale('ar');
-        $notification = new ResetPassword('token');
-        $notification->url = 'https://shop.test/admin/password-reset/reset?x=1';
-        $mail = $notification->toMail(User::factory()->make());
+        $mail = (new ResetPassword('token'))->toMail(User::factory()->make());
         $html = (string) $mail->render();
 
         $this->assertSame('إعادة تعيين كلمة المرور', $mail->subject);
