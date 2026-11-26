@@ -32,6 +32,8 @@ Queued jobs run on Redis through [Horizon](https://laravel.com/docs/horizon); it
 
 - `APP_ENV=production`, `APP_DEBUG=false`, HTTPS with `FORCE_HTTPS=true` (links and assets use https; let the web server redirect http requests), `SESSION_SECURE_COOKIE=true`.
 - Set the `MAIL_*` values to a real mail server and `APP_URL` to the public address: every admin is emailed about each new order, at the address in their profile.
+- "Forgot password?" on `/admin/login` needs the mail server and Horizon. If mail is broken, `php artisan make:filament-user` creates another admin.
+- The app only answers on `APP_URL`'s host (and its subdomains).
 - Keep Redis private and persistent (AOF), so queued jobs survive a restart.
 - On a server that used the database queue, let it empty before switching.
 - `MART_BASE_URL=https://mart.ps` with the `mk_live_` key. Keys never go in git.

@@ -13,6 +13,8 @@ return [
     'image' => 'حقل :attribute يجب أن يكون صورة.',
     'mimes' => 'نوع الملف في :attribute غير مسموح.',
     'mimetypes' => 'نوع الملف في :attribute غير مسموح.',
+    'confirmed' => 'تأكيد :attribute غير مطابق.',
+    'same' => 'حقلا :attribute و:other غير متطابقين.',
     'unique' => 'قيمة :attribute مستخدمة من قبل.',
     'max' => [
         'string' => 'حقل :attribute لا يتجاوز :max حرفاً.',
@@ -35,5 +37,7 @@ return [
         'address_line1' => 'العنوان',
         'notes' => 'الملاحظات',
         'reference' => 'رقم الطلب',
+        'password' => 'كلمة المرور',
+        'passwordConfirmation' => 'تأكيد كلمة المرور',
     ],
 ];

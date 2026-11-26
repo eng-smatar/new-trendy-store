@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Auth\RequestPasswordReset;
 use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\SetAdminLocale;
 use App\Models\Setting;
@@ -31,6 +32,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->profile()
+            ->passwordReset(RequestPasswordReset::class)
             ->brandName(fn (): string => Setting::get('store_name'))
             // White backing keeps a dark logo readable in dark mode.
             ->brandLogo(fn () => ($logo = Setting::logoUrl()) ? new HtmlString(

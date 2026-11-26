@@ -12,7 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Reset links are built from the request's host: accept only APP_URL's host and subdomains.
+        // (Laravel skips this check locally and in tests.)
+        $middleware->trustHosts();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

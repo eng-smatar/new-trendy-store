@@ -153,6 +153,7 @@ The owner changes how the website looks and behaves from a settings area in the 
 - **FR-029**: Categories MUST be shown with Arabic names, with built-in defaults that an administrator can change.
 - **FR-030**: Administrators MUST be able to limit which products are listed to those with at least a chosen profit per item (selling price minus cost) and to chosen categories including their subcategories. Orders already placed are not affected.
 - **FR-031**: Every administrator MUST be emailed when a new order is received, in their panel language, without customer personal details. A mail or queue failure MUST NOT affect the customer's order.
+- **FR-032**: Administrators MUST be able to reset a forgotten password by email through a time-limited link; the request form MUST NOT reveal whether an address belongs to an administrator.
 
 ### Key Entities
 
