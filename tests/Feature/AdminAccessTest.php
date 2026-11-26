@@ -58,6 +58,13 @@ class AdminAccessTest extends TestCase
         $this->actingAs(User::factory()->create())->get('/horizon')->assertOk();
     }
 
+    public function test_seeding_works_and_creates_no_account(): void
+    {
+        $this->artisan('db:seed')->assertSuccessful();
+
+        $this->assertSame(0, User::count());
+    }
+
     public function test_override_below_cost_is_rejected(): void
     {
         $this->actingAs(User::factory()->create());
