@@ -11,7 +11,7 @@ class CartPage extends Component
 {
     public function setQuantity(string $key, $quantity, Cart $cart): void
     {
-        if (array_key_exists($key, $cart->raw())) {
+        if (is_numeric($quantity) && array_key_exists($key, $cart->raw())) {
             $cart->set($key, (int) $quantity);
             $this->dispatch('cart-updated');
         }

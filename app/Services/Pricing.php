@@ -11,16 +11,20 @@ class Pricing
     {
         $markupPercent ??= (float) Setting::get('markup_percent');
 
-        return max($cost, $override ?? round($cost * (1 + max(0, $markupPercent) / 100), 2));
+        // An override the cost has overtaken would earn nothing: fall back to the markup.
+        return $override !== null && $override >= $cost
+            ? $override
+            : max($cost, round($cost * (1 + max(0, $markupPercent) / 100), 2));
     }
 
     /** Re-price the whole catalogue after a markup change. */
     public static function recalculate(): void
     {
+        Setting::flush(); // another process may have saved a new markup during a long sync
         $factor = 1 + max(0, (float) Setting::get('markup_percent')) / 100;
 
         DB::table('products')->update(['selling_price' => DB::raw(sprintf(
-            'CASE WHEN price_override IS NULL THEN ROUND(cost_price * %.6F, 2) WHEN price_override < cost_price THEN cost_price ELSE price_override END',
+            'CASE WHEN price_override IS NULL OR price_override < cost_price THEN ROUND(cost_price * %.6F, 2) ELSE price_override END',
             $factor,
         ))]);
     }

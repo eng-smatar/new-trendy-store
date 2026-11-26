@@ -19,11 +19,25 @@ class Setting extends Model
 
     protected $casts = ['value' => 'json'];
 
+    protected static function booted(): void
+    {
+        static::saved(fn () => static::flush());
+        static::deleted(fn () => static::flush());
+    }
+
+    /** A saved empty value stays empty; the default applies only when nothing was ever saved. */
     public static function get(string $key): mixed
     {
-        $row = rescue(fn () => static::find($key), null, false);
+        $saved = app('store.settings');
 
-        return $row?->value ?? config("store.defaults.$key");
+        return $saved->has($key) ? $saved->get($key) : config("store.defaults.$key");
+    }
+
+    /** Forget what this request has read. */
+    public static function flush(): void
+    {
+        app()->forgetInstance('store.settings');
+        app()->forgetInstance('store.listed_category_ids');
     }
 
     /** The logo uploaded in settings, else the one shipped in public/logo.png. */

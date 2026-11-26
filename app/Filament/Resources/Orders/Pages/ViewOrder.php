@@ -56,6 +56,11 @@ class ViewOrder extends ViewRecord
                 ->visible($conflict)
                 ->action(fn (Order $record, Action $action) => $this->attempt($action, fn (OrderApproval $a) => $a->checkInMart($record))),
 
+            Action::make('markHandled')->label(__('admin.mark_handled'))->color('gray')->requiresConfirmation()
+                // A conflict has its own way out: check in Mart.
+                ->visible(fn (Order $record) => in_array($record->attention_reason, ['total_mismatch', 'found_in_mart'], true))
+                ->action(fn (Order $record, Action $action) => $this->attempt($action, fn (OrderApproval $a) => $a->markHandled($record))),
+
             Action::make('cancelOrder')->label(__('admin.cancel_order'))->color('danger')->requiresConfirmation()
                 ->visible($in(OrderStatus::Submitted))
                 ->action(fn (Order $record, Action $action) => $this->attempt($action, fn (OrderApproval $a) => $a->cancel($record))),

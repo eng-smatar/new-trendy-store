@@ -19,7 +19,7 @@ class SalesStats extends StatsOverviewWidget
     public static function counted(?string $days): Builder
     {
         return Order::query()
-            ->whereNotIn('status', [OrderStatus::Rejected, OrderStatus::Cancelled])
+            ->whereNotIn('status', [OrderStatus::Rejected, OrderStatus::Cancelled, OrderStatus::SendFailed])
             ->when((int) $days > 0, fn ($q) => $q->where('created_at', '>=', now()->subDays((int) $days)));
     }
 

@@ -41,21 +41,21 @@ class OrderResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $pending = Order::where('status', OrderStatus::PendingReview)->count();
+        $pending = Order::needsAction()->count();
 
         return $pending ? (string) $pending : null;
     }
 
     public static function getNavigationBadgeTooltip(): ?string
     {
-        return __('orders.status.pending_review');
+        return __('admin.needs_action');
     }
 
     private static function badges(): array
     {
         return [
             'unverified' => fn (Order $r) => $r->quote_verified ? null : __('admin.unverified'),
-            'attention' => fn (Order $r) => $r->attention_reason ? __('admin.attention.'.$r->attention_reason) : null,
+            'attention' => fn (Order $r) => in_array($r->attention_reason, Order::ATTENTION, true) ? __('admin.attention.'.$r->attention_reason) : null,
         ];
     }
 
@@ -98,7 +98,7 @@ class OrderResource extends Resource
                     ->formatStateUsing(fn (OrderStatus $state) => $state->label())->color(fn (OrderStatus $state) => $state->color()),
                 $text('created_at')->dateTime('Y-m-d H:i'),
                 $text('unverified', '')->badge()->color('warning')->state($badges['unverified'])->hidden(fn (Order $r) => $r->quote_verified),
-                $text('attention', '')->badge()->color('danger')->state($badges['attention'])->hidden(fn (Order $r) => ! $r->attention_reason),
+                $text('attention', '')->badge()->color('danger')->state($badges['attention'])->hidden(fn (Order $r) => ! in_array($r->attention_reason, Order::ATTENTION, true)),
                 $text('last_error')->columnSpanFull()->hidden(fn (Order $r) => ! $r->last_error),
                 $text('mart_status_name'),
                 $text('earning_state')->formatStateUsing(fn (string $state) => __("admin.earning.$state")),

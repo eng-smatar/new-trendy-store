@@ -7,11 +7,9 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Services\ArabicText;
 use App\Services\Mart\MartClient;
-use App\Services\Mart\MartException;
 use App\Services\Pricing;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Sleep;
 use Throwable;
 
 class SyncCatalog extends Command
@@ -64,7 +62,7 @@ class SyncCatalog extends Command
         $page = 1;
 
         do {
-            $response = $this->fetch($mart, 'products', ['page' => $page++, 'limit' => 1000] + ($quick ? [] : ['include' => 'description']));
+            $response = $mart->getPatiently('products', ['page' => $page++, 'limit' => 1000] + ($quick ? [] : ['include' => 'description']));
 
             $rows = array_map(function (array $p) use ($overrides, $markup, $now) {
                 $cost = (float) $p['price']['group_price'];
@@ -117,7 +115,7 @@ class SyncCatalog extends Command
 
     private function syncCategories(MartClient $mart): void
     {
-        $categories = collect($this->fetch($mart, 'categories')['data']['categories'])->map(function (array $c) {
+        $categories = collect($mart->getPatiently('categories')['data']['categories'])->map(function (array $c) {
             $parts = array_map('trim', explode('>', $c['category_name']));
 
             return [
@@ -128,19 +126,5 @@ class SyncCatalog extends Command
             ];
         });
         $categories->chunk(500)->each(fn ($chunk) => Category::upsert($chunk->values()->all(), ['id']));
-    }
-
-    private function fetch(MartClient $mart, string $path, array $query = []): array
-    {
-        for ($attempt = 1; ; $attempt++) {
-            try {
-                return $mart->get($path, $query, 120);
-            } catch (MartException $e) {
-                if (! $e->retryable() || $attempt >= 3 || $e->retryAfter > 120) {
-                    throw $e;
-                }
-                Sleep::for(max($e->retryAfter, 5))->seconds();
-            }
-        }
     }
 }

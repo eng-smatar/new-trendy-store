@@ -25,6 +25,14 @@ class OrderApproval
      */
     public function approve(Order $order, ?User $admin = null, array $prices = [], ?bool $freeShipping = null, bool $customerAccepted = false): void
     {
+        $this->locked($order, fn () => $this->saveApproval($order, $admin, $prices, $freeShipping, $customerAccepted));
+
+        // Outside the lock: the job takes the same one.
+        SubmitOrderToMart::dispatch($order->id);
+    }
+
+    private function saveApproval(Order $order, ?User $admin, array $prices, ?bool $freeShipping, bool $customerAccepted): void
+    {
         $this->assertStatus($order, [OrderStatus::PendingReview, OrderStatus::SendFailed]);
 
         if ($order->attention_reason === 'conflict') {
@@ -83,32 +91,25 @@ class OrderApproval
                 'next_attempt_at' => null,
             ])->save();
         });
-
-        SubmitOrderToMart::dispatch($order->id);
     }
 
     public function reject(Order $order): void
     {
-        $this->assertStatus($order, [OrderStatus::PendingReview, OrderStatus::SendFailed]);
+        $this->locked($order, function () use ($order) {
+            $this->assertStatus($order, [OrderStatus::PendingReview, OrderStatus::SendFailed]);
 
-        if ($order->attention_reason === 'conflict') {
-            throw new CheckoutException(__('admin.errors.check_in_mart'));
-        }
+            if ($order->attention_reason === 'conflict') {
+                throw new CheckoutException(__('admin.errors.check_in_mart'));
+            }
 
-        $order->update(['status' => OrderStatus::Rejected, 'next_attempt_at' => null]);
+            $order->update(['status' => OrderStatus::Rejected, 'attention_reason' => null, 'next_attempt_at' => null]);
+        });
     }
 
     /** Withdraw an order that is still retrying, only once Mart confirms it does not have it. */
     public function stopRetrying(Order $order): void
     {
-        $lock = SubmitOrderToMart::lock($order->id);
-
-        if (! $lock->get()) {
-            throw new CheckoutException(__('admin.errors.sending_now'));
-        }
-
-        try {
-            $order->refresh();
+        $this->locked($order, function () use ($order) {
             $this->assertStatus($order, [OrderStatus::Approved]);
 
             if ($mart = $this->find($order)) {
@@ -124,24 +125,47 @@ class OrderApproval
                 'approved_at' => null,
                 'next_attempt_at' => null,
             ]);
-        } finally {
-            $lock->release();
-        }
+        });
     }
 
     /** After an idempotency conflict: link Mart's order, or release the block if it has none. */
     public function checkInMart(Order $order): void
     {
-        $this->assertStatus($order, [OrderStatus::SendFailed]);
+        $this->locked($order, function () use ($order) {
+            $this->assertStatus($order, [OrderStatus::SendFailed]);
 
-        if ($mart = $this->find($order)) {
-            $order->attention_reason = 'found_in_mart';
-            $order->applyMart($mart);
+            if ($mart = $this->find($order)) {
+                $order->attention_reason = 'found_in_mart';
+                $order->applyMart($mart);
 
-            return;
+                return;
+            }
+
+            $order->update(['attention_reason' => null, 'request_body' => null]);
+        });
+    }
+
+    /** The owner has dealt with the warning. */
+    public function markHandled(Order $order): void
+    {
+        $order->update(['attention_reason' => null]);
+    }
+
+    /** One action at a time per order, always on what the database says now. */
+    private function locked(Order $order, callable $change): void
+    {
+        $lock = SubmitOrderToMart::lock($order->id);
+
+        if (! $lock->get()) {
+            throw new CheckoutException(__('admin.errors.sending_now'));
         }
 
-        $order->update(['attention_reason' => null, 'request_body' => null]);
+        try {
+            $order->refresh();
+            $change();
+        } finally {
+            $lock->release();
+        }
     }
 
     public function cancel(Order $order): void

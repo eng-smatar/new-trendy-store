@@ -30,26 +30,29 @@ class Category extends Model
     }
 
     /**
-     * Normalised Arabic names of each category and its ancestors, keyed by id. Built at search time,
-     * so an admin rename applies at once.
+     * Arabic labels along each category's path, keyed by id.
      *
-     * @return Collection<int, string>
+     * @return Collection<int, array<int, string>>
      */
-    public static function arabicSearchIndex(): Collection
+    public static function pathLabels(): Collection
     {
-        $all = static::all()->keyBy('name');
+        $all = static::orderBy('name')->get()->keyBy('name');
 
         return $all->mapWithKeys(function (self $category) use ($all) {
             $parts = explode(' > ', $category->name);
-            $labels = [];
 
-            foreach (array_keys($parts) as $i) {
+            return [$category->id => array_map(function (int $i) use ($parts, $all) {
                 $path = implode(' > ', array_slice($parts, 0, $i + 1));
-                $labels[] = ($all->get($path) ?? new self(['name' => $path]))->label();
-            }
 
-            return [$category->id => ArabicText::normalize(implode(' ', $labels))];
+                return ($all->get($path) ?? new self(['name' => $path]))->label();
+            }, array_keys($parts))];
         });
+    }
+
+    /** Built at search time, so an admin rename applies at once. */
+    public static function arabicSearchIndex(): Collection
+    {
+        return static::pathLabels()->map(fn (array $labels) => ArabicText::normalize(implode(' ', $labels)));
     }
 
     /**
@@ -59,11 +62,20 @@ class Category extends Model
      */
     public static function listedIds(): ?Collection
     {
+        return app('store.listed_category_ids')['ids'];
+    }
+
+    public static function chosenBranchIds(): ?Collection
+    {
         $chosen = array_filter((array) Setting::get('listing_categories'));
 
-        return $chosen
-            ? static::findMany($chosen)->flatMap(fn (self $category) => $category->branchIds())->unique()->values()
-            : null;
+        if (! $chosen) {
+            return null;
+        }
+
+        $all = static::all(['id', 'name']);
+
+        return $all->whereIn('id', $chosen)->flatMap(fn (self $category) => $category->branchIds($all))->unique()->values();
     }
 
     public function scopeListed(Builder $query): void
@@ -91,9 +103,11 @@ class Category extends Model
         })->values();
     }
 
-    /** This category's id and every subcategory id. */
-    public function branchIds(): Collection
+    /** This category's id and every subcategory id. Pass $all to avoid loading it again. */
+    public function branchIds(?Collection $all = null): Collection
     {
-        return static::where('id', $this->id)->orWhere('name', 'like', $this->name.' > %')->pluck('id');
+        return ($all ?? static::all(['id', 'name']))
+            ->filter(fn (self $c) => $c->id === $this->id || str_starts_with($c->name, $this->name.' > '))
+            ->pluck('id')->values();
     }
 }

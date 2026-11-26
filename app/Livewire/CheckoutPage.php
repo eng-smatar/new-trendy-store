@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Setting;
 use App\Models\Town;
+use App\Services\ArabicText;
 use App\Services\Cart;
 use App\Services\Checkout;
 use App\Services\CheckoutException;
@@ -68,7 +69,7 @@ class CheckoutPage extends Component
         return [
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
-            'phone' => ['required', 'string', 'max:40', 'regex:/^\+?[0-9\s\-()]{7,}$/'],
+            'phone' => ['required', 'string', 'max:40', 'regex:/^\+?(?:[\s\-()]*[0-9]){7,}[\s\-()]*$/'],
             'email' => ['nullable', 'email', 'max:255'],
             'gender' => ['required', Rule::in(['male', 'female'])],
             'district_id' => ['required', Rule::exists('towns', 'district_id')],
@@ -82,11 +83,7 @@ class CheckoutPage extends Component
     {
         $this->notice = '';
 
-        // Arabic-Indic digits are common on Arabic keyboards.
-        $this->phone = trim(strtr($this->phone, array_combine(
-            [...mb_str_split('٠١٢٣٤٥٦٧٨٩'), ...mb_str_split('۰۱۲۳۴۵۶۷۸۹')],
-            [...range(0, 9), ...range(0, 9)],
-        )));
+        $this->phone = trim(ArabicText::digits($this->phone));
 
         $data = $this->validate();
 
@@ -95,10 +92,11 @@ class CheckoutPage extends Component
         }
 
         $phoneKey = 'order-phone:'.preg_replace('/\D/', '', $data['phone']);
+        // Mobile networks put many shoppers behind one address, so its limit is loose; the phone's is tight.
         $ipKey = 'order-ip:'.request()->ip();
 
-        if (RateLimiter::tooManyAttempts($phoneKey, 3) || RateLimiter::tooManyAttempts($ipKey, 10)
-            || ! RateLimiter::attempt('order-try:'.request()->ip(), 10, fn () => true)) {
+        if (RateLimiter::tooManyAttempts($phoneKey, 3) || RateLimiter::tooManyAttempts($ipKey, 30)
+            || ! RateLimiter::attempt('order-try:'.request()->ip(), 30, fn () => true)) {
             return $this->notice = __('store.too_many');
         }
 

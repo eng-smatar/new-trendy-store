@@ -39,7 +39,7 @@ Validation: FR-023. `customer_total = products_total + (free_shipping ? 0 : ship
 | send_failed | rejected | admin rejects |
 | submitted | cancelled | Mart confirms cancellation, or sync reports `cancellation.cancelled_at` |
 
-Timeouts, 5xx and 429 leave the order `approved` and retry. `request_body` changes only after a definite refusal or a withdrawal confirmed absent from Mart. `attention_reason` is set for a total mismatch, an idempotency conflict, or an order found in Mart that was not marked submitted.
+Timeouts, 5xx and 429 leave the order `approved` and retry. `request_body` changes only after a definite refusal or a withdrawal confirmed absent from Mart. `attention_reason` is set for a total mismatch, an idempotency conflict, or an order found in Mart that was not marked submitted; the owner can clear the first and last (`mart_total`, Mart's last reported total, keeps a cleared mismatch quiet until it changes). A Mart cancellation clears any warning.
 
 ## order_items
 `order_id`, `product_id`, `combination_id?`, `name`, `options_label?`, `quantity`, `unit_price`, `unit_cost`.

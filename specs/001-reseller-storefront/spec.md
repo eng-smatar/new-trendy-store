@@ -102,7 +102,7 @@ The owner changes how the website looks and behaves from a settings area in the 
 ### Edge Cases
 
 - Mart is unreachable: browsing keeps working from the last known catalogue; new orders are accepted for review and marked unverified, and approved orders are retried safely.
-- A cost price rises above the selling price: the selling price is raised to at least cost before the product can be ordered.
+- A cost price rises above the selling price: the markup price is used instead (a hand-set price that cost has overtaken is ignored), so the product never sells below cost.
 - A product leaves the offer or becomes inactive while in a cart: the customer is told and the line cannot be ordered.
 - Mart's usage limits are reached: catalogue updates pause and resume without losing orders.
 - Mart reduces or cancels an order after submission: the store shows the updated state, and cancelled orders do not count as sales.

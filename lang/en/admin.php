@@ -137,6 +137,8 @@ return [
     'listing_categories_help' => 'Choosing a category includes its subcategories. Leave empty to list everything.',
     'profit' => 'Profit',
     'slider_cache_help' => 'The same products stay for this long. 0 picks new ones on every visit. Saving picks again.',
+    'needs_action' => 'Needs action',
+    'mark_handled' => 'Mark as handled',
     'errors' => [
         'check_in_mart' => 'Check this order in Mart first.',
         'product_gone' => '":name" is no longer available.',

@@ -4,6 +4,15 @@ namespace App\Services;
 
 class ArabicText
 {
+    /** Arabic-Indic and Persian digits to 0-9, as typed on Arabic keyboards. */
+    public static function digits(string $text): string
+    {
+        return strtr($text, array_combine(
+            [...mb_str_split('٠١٢٣٤٥٦٧٨٩'), ...mb_str_split('۰۱۲۳۴۵۶۷۸۹')],
+            [...range(0, 9), ...range(0, 9)],
+        ));
+    }
+
     public static function normalize(?string $text): string
     {
         // Diacritics and tatweel

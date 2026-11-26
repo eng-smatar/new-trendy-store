@@ -29,8 +29,7 @@ class Home extends Component
         $all = Category::all(['id', 'name']);
 
         $roots = Category::roots()->map(function (Category $root) use ($perCategory, $all) {
-            $branch = $all->filter(fn ($c) => $c->id === $root->id || str_starts_with($c->name, $root->name.' > '))->pluck('id');
-            $stats = $perCategory->whereIn('category_id', $branch);
+            $stats = $perCategory->whereIn('category_id', $root->branchIds($all));
 
             return ['category' => $root, 'products' => (int) $stats->sum('products'), 'newest' => $stats->max('newest')];
         })->sortByDesc('products')->values();

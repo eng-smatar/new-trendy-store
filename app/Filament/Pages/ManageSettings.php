@@ -135,22 +135,9 @@ class ManageSettings extends Page
     /** Full path of every category, in the panel's language. */
     private static function categoryOptions(): array
     {
-        $all = Category::orderBy('name')->get()->keyBy('name');
-
-        return $all->mapWithKeys(function (Category $category) use ($all) {
-            if (app()->getLocale() !== 'ar') {
-                return [$category->id => $category->name];
-            }
-
-            $parts = explode(' > ', $category->name);
-            $labels = array_map(function (int $i) use ($parts, $all) {
-                $path = implode(' > ', array_slice($parts, 0, $i + 1));
-
-                return ($all->get($path) ?? new Category(['name' => $path]))->label();
-            }, array_keys($parts));
-
-            return [$category->id => implode(' › ', $labels)];
-        })->all();
+        return app()->getLocale() === 'ar'
+            ? Category::pathLabels()->map(fn (array $labels) => implode(' › ', $labels))->all()
+            : Category::orderBy('name')->pluck('name', 'id')->all();
     }
 
     /** WCAG contrast of white text on this colour is at least 4.5:1. */

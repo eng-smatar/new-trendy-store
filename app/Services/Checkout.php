@@ -80,6 +80,9 @@ class Checkout
         try {
             $allowed = (bool) ($this->mart->get('account', [], 10)['data']['account']['free_shipping_allowed'] ?? false);
         } catch (MartException) {
+            // Remember the failure briefly, or every click during an outage waits on Mart again.
+            Cache::put('mart.free_shipping_allowed', false, now()->addMinute());
+
             return false;
         }
 
@@ -160,6 +163,12 @@ class Checkout
             }
 
             report($e);
+
+            // A bad key or missing permission is our setup, not the customer's: take the order unverified.
+            // Other 403s (such as a blocked account) are refusals: we could never send those orders.
+            if ($e->status === 401 || $e->errorCode === 'insufficient_scope') {
+                return $local;
+            }
 
             // Our copy is behind Mart's: re-read these products so the next attempt shows the truth.
             if ($this->isStale($e) && $this->refreshProducts($order->items->pluck('product_id')->all())) {

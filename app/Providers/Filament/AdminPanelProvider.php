@@ -30,6 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->profile()
             ->brandName(fn (): string => Setting::get('store_name'))
             // White backing keeps a dark logo readable in dark mode.
             ->brandLogo(fn () => ($logo = Setting::logoUrl()) ? new HtmlString(

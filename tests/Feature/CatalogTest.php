@@ -37,18 +37,19 @@ class CatalogTest extends TestCase
     public function test_price_never_drops_below_cost(): void
     {
         $this->assertSame(120.0, Pricing::selling(100));
-        $this->assertSame(100.0, Pricing::selling(100, 50));
+        $this->assertSame(120.0, Pricing::selling(100, 50)); // overtaken override: markup instead
+        $this->assertSame(100.0, Pricing::selling(100, 100));
         $this->assertSame(150.0, Pricing::selling(100, 150));
 
         $product = Product::factory()->create(['price_override' => 110]);
         $product->update(['cost_price' => 130]);
-        $this->assertEquals(130, $product->selling_price);
+        $this->assertEquals(156, $product->selling_price); // cost 130 + 20%, not the old 110
 
         Product::factory()->create(['id' => 7]);
         Setting::set('markup_percent', 50);
         Pricing::recalculate();
         $this->assertEquals(150, Product::find(7)->selling_price);
-        $this->assertEquals(130, $product->fresh()->selling_price);
+        $this->assertEquals(195, $product->fresh()->selling_price); // the SQL rule agrees: 130 + 50%
     }
 
     public function test_sync_keeps_admin_fields_and_marks_missing_products(): void
@@ -221,5 +222,7 @@ class CatalogTest extends TestCase
 
         $this->get('/products/'.$product->id)->assertOk()->assertSee('<p>وصف</p>', false)
             ->assertDontSee('alert(1)', false)->assertDontSee('alert(2)', false);
+
+        $this->assertSame('<div><p>x</p></div>', Product::safeHtml('<div class="fixed inset-0" style="position:fixed;z-index:99"><p>x</p></div>'));
     }
 }

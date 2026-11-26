@@ -6,16 +6,25 @@ use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Services\Mart\MartClient;
 use App\Services\Mart\MartException;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
 
 /** One send attempt. mart:resend-orders retries anything still "approved". */
-class SubmitOrderToMart implements ShouldQueue
+class SubmitOrderToMart implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
+    /** At most one waiting job per order; the limit frees a job lost with its worker. */
+    public int $uniqueFor = 600;
+
     public function __construct(public int $orderId) {}
+
+    public function uniqueId(): string
+    {
+        return (string) $this->orderId;
+    }
 
     public static function lock(int $orderId)
     {
@@ -54,6 +63,10 @@ class SubmitOrderToMart implements ShouldQueue
         try {
             // The stored body is resent unchanged: Mart de-duplicates on partner_reference.
             $response = $mart->post('orders', $order->request_body);
+
+            if (empty($response['data']['order'])) {
+                throw new MartException(MartException::UNKNOWN, 'unexpected_response', 'Mart sent no order back.');
+            }
         } catch (MartException $e) {
             $order->last_error = $e->errorCode.': '.$e->getMessage();
 
@@ -69,6 +82,6 @@ class SubmitOrderToMart implements ShouldQueue
             return;
         }
 
-        $order->applyMart($response['data']['order'] ?? []);
+        $order->applyMart($response['data']['order']);
     }
 }

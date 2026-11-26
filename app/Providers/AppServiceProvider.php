@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Category;
+use App\Models\Setting;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +13,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Scoped: read once per request or queued job.
+        $this->app->scoped('store.settings', fn () => Setting::all()->pluck('value', 'key'));
+        $this->app->scoped('store.listed_category_ids', fn () => ['ids' => Category::chosenBranchIds()]);
     }
 
     /**

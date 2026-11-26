@@ -17,6 +17,7 @@ class Order extends Model
             'products_total' => 'decimal:2',
             'shipping_fee' => 'decimal:2',
             'customer_total' => 'decimal:2',
+            'mart_total' => 'decimal:2',
             'expected_net' => 'decimal:2',
             'net_earning' => 'decimal:2',
             'free_shipping' => 'boolean',
@@ -43,6 +44,18 @@ class Order extends Model
         return implode('، ', array_filter([$this->address_line1, $this->town_name, $this->district_name]));
     }
 
+    /** Warnings the owner still has to act on. */
+    public const ATTENTION = ['total_mismatch', 'conflict', 'found_in_mart'];
+
+    public function scopeNeedsAction($query): void
+    {
+        $query->where('status', OrderStatus::PendingReview)
+            ->orWhere('status', OrderStatus::SendFailed)
+            ->orWhereIn('attention_reason', self::ATTENTION)
+            // Approved but still unconfirmed after several tries.
+            ->orWhere(fn ($q) => $q->where('status', OrderStatus::Approved)->where('send_attempts', '>=', 5));
+    }
+
     /** Record what Mart says about this order (create response or single read). */
     public function applyMart(array $mart): void
     {
@@ -62,8 +75,17 @@ class Order extends Model
         $this->earning_state = $mart['money']['earning_state'] ?? $this->earning_state;
         $this->net_earning = $mart['money']['net'] ?? $mart['reward']['net_reward'] ?? $this->net_earning;
 
-        if (isset($mart['cod_total']) && ! $cancelled && abs((float) $mart['cod_total'] - (float) $this->customer_total) >= 0.01) {
-            $this->attention_reason = 'total_mismatch';
+        if ($cancelled) {
+            $this->attention_reason = null; // nothing left to act on
+        } elseif (isset($mart['cod_total'])) {
+            $total = (float) $mart['cod_total'];
+            $changed = $this->mart_total === null || abs($total - (float) $this->mart_total) >= 0.01;
+
+            // Warn once per new figure: "handled" stays quiet until Mart changes the total again.
+            if ($changed && abs($total - (float) $this->customer_total) >= 0.01) {
+                $this->attention_reason = 'total_mismatch';
+            }
+            $this->mart_total = $total;
         }
 
         $this->save();

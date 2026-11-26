@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Services\ArabicText;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -33,7 +34,7 @@ class TrackOrder extends Component
             return;
         }
 
-        $digits = fn (string $v) => preg_replace('/\D/', '', strtr($v, array_combine(mb_str_split('٠١٢٣٤٥٦٧٨٩'), range(0, 9))));
+        $digits = fn (string $v) => preg_replace('/\D/', '', ArabicText::digits($v));
         $order = Order::where('reference', trim($this->reference))->first();
 
         // One message for every mismatch, so nothing about other orders leaks.

@@ -89,7 +89,7 @@
             </ul>
 
             @if ($product->description_short)
-                <div class="rich" dir="auto">{!! str($product->description_short)->sanitizeHtml() !!}</div>
+                <div class="rich" dir="auto">{!! \App\Models\Product::safeHtml($product->description_short) !!}</div>
             @endif
         </div>
     </div>
@@ -97,7 +97,7 @@
     @if ($product->description)
         <section class="mt-16 grid gap-4 border-t border-line pt-10 md:mt-24 lg:grid-cols-[minmax(0,3fr)_minmax(0,9fr)] lg:gap-16">
             <h2 class="title-2">{{ __('store.description') }}</h2>
-            <div class="rich max-w-3xl overflow-x-auto" dir="auto">{!! str($product->description)->sanitizeHtml() !!}</div>
+            <div class="rich max-w-3xl overflow-x-auto" dir="auto">{!! \App\Models\Product::safeHtml($product->description) !!}</div>
         </section>
     @endif
 

@@ -38,6 +38,15 @@ class Product extends Model
         });
     }
 
+    /**
+     * Supplier HTML without scripts, and without style or class, which could lay text over the page.
+     */
+    public static function safeHtml(?string $html): string
+    {
+        // After sanitising, attributes are always double-quoted and quotes in text are encoded.
+        return preg_replace('/\s(?:style|class)="[^"]*"/i', '', (string) str((string) $html)->sanitizeHtml());
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);

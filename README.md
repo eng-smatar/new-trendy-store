@@ -35,6 +35,14 @@ Locally, `php artisan schedule:work` replaces the cron line.
 - In `/admin` settings: set your markup (starts at 20%), store name, contacts and policy pages.
 - Back up the database and `storage/app/public`.
 
+## Updating
+
+```bash
+git pull && composer install --no-dev --optimize-autoloader && npm ci && npm run build
+php artisan migrate --force && php artisan optimize
+php artisan queue:restart   # or the worker keeps running the old code
+```
+
 ## How an order moves
 
 Customer confirms → **awaiting review** → you approve → sent to Mart (retried safely until Mart answers). Badges on an order mean: *Unverified*, Mart could not be reached at checkout; *Mart total differs*, call the customer or cancel; *Check in Mart*, Mart already has that reference.

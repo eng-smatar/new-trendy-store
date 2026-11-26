@@ -6,6 +6,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 
 /** The only code that calls Mart. See specs/001-reseller-storefront/contracts/mart-api.md. */
 class MartClient
@@ -14,6 +15,25 @@ class MartClient
     public function get(string $path, array $query = [], int $timeout = 60): array
     {
         return $this->send(fn (PendingRequest $http) => $http->get($path, $query), $timeout);
+    }
+
+    /**
+     * For background syncs: waits out a rate limit or a short outage, three tries in all.
+     *
+     * @return array{data: array, meta: array}
+     */
+    public function getPatiently(string $path, array $query = [], int $timeout = 120): array
+    {
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                return $this->get($path, $query, $timeout);
+            } catch (MartException $e) {
+                if (! $e->retryable() || $attempt >= 3 || $e->retryAfter > 120) {
+                    throw $e;
+                }
+                Sleep::for(max($e->retryAfter, 5))->seconds();
+            }
+        }
     }
 
     /** @return array{data: array, meta: array} */
