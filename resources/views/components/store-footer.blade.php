@@ -19,12 +19,12 @@
         'tiktok' => '<path d="M16.6 2h-3.2v13.6a2.9 2.9 0 1 1-2-2.8V9.5a6.2 6.2 0 1 0 5.3 6.1V8.7a7.8 7.8 0 0 0 4.5 1.4V6.9a4.6 4.6 0 0 1-4.6-4.9z"/>',
     ];
 @endphp
-<footer class="border-t border-stone-200 bg-brand-soft text-sm text-stone-700">
-    <div class="mx-auto max-w-6xl px-4 py-10">
+<footer class="bg-brand-deep text-white">
+    <div class="wrap py-16">
         <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div class="space-y-4 lg:col-span-2">
-                <a href="{{ url('/') }}" class="inline-block">
-                    @if ($logo = Setting::logoUrl())<img src="{{ $logo }}" alt="{{ $storeName }}" class="h-11" loading="lazy">@else<span class="text-lg font-bold text-brand">{{ $storeName }}</span>@endif
+                <a href="{{ url('/') }}" class="inline-block rounded-lg bg-white p-2">
+                    @if ($logo = Setting::logoUrl())<img src="{{ $logo }}" alt="{{ $storeName }}" class="h-11" loading="lazy">@else<span class="title-3 text-brand">{{ $storeName }}</span>@endif
                 </a>
                 @if ($about = Setting::get('footer_text'))<p class="max-w-sm leading-relaxed">{{ $about }}</p>@endif
 
@@ -33,7 +33,7 @@
                         @php $icon = collect($icons)->first(fn ($path, $name) => str_contains((string) parse_url($social['url'], PHP_URL_HOST), $name)); @endphp
                         <li>
                             <a href="{{ $social['url'] }}" rel="noopener" target="_blank"
-                               class="{{ $icon ? 'size-11' : 'h-11 px-4' }} inline-flex items-center justify-center rounded-full border border-stone-300 bg-white hover:border-brand hover:text-brand"
+                               class="{{ $icon ? 'size-11' : 'h-11 px-4' }} inline-flex items-center justify-center rounded-full border border-white/35 hover:border-white hover:bg-white hover:text-brand"
                                @if ($icon) aria-label="{{ $social['label'] }}" @endif>
                                 @if ($icon)<svg viewBox="0 0 24 24" fill="currentColor" class="size-5" aria-hidden="true">{!! $icon !!}</svg>@else{{ $social['label'] }}@endif
                             </a>
@@ -50,22 +50,22 @@
             </div>
 
             <nav aria-label="{{ __('store.shop_heading') }}">
-                <h2 class="font-bold text-brand">{{ __('store.shop_heading') }}</h2>
-                <ul class="mt-3 space-y-2">
-                    <li><a href="{{ url('/search') }}" class="hover:text-brand hover:underline">{{ __('store.all_products') }}</a></li>
-                    <li><a href="{{ url('/') }}#categories" class="hover:text-brand hover:underline">{{ __('store.categories') }}</a></li>
+                <h3 class="title-3">{{ __('store.shop_heading') }}</h3>
+                <ul class="mt-2">
+                    <li><a href="{{ url('/search') }}" class="inline-flex min-h-11 items-center underline-offset-8 hover:underline md:min-h-9">{{ __('store.all_products') }}</a></li>
+                    <li><a href="{{ url('/') }}#categories" class="inline-flex min-h-11 items-center underline-offset-8 hover:underline md:min-h-9">{{ __('store.categories') }}</a></li>
                     @foreach ($categories as $category)
-                        <li><a href="{{ url('/categories/'.$category->id) }}" class="hover:text-brand hover:underline">{{ $category->label() }}</a></li>
+                        <li><a href="{{ url('/categories/'.$category->id) }}" class="inline-flex min-h-11 items-center underline-offset-8 hover:underline md:min-h-9">{{ $category->label() }}</a></li>
                     @endforeach
                 </ul>
             </nav>
 
             <div>
-                <h2 class="font-bold text-brand">{{ __('store.shipping_heading') }}</h2>
-                <ul class="mt-3 space-y-2">
+                <h3 class="title-3">{{ __('store.shipping_heading') }}</h3>
+                <ul class="mt-2">
                     @foreach (['Isreal', 'Jerusalem', 'default'] as $zone)
                         @if ($zones->has($zone))
-                            <li>
+                            <li class="py-1">
                                 {{ __("store.zones.$zone") }}:
                                 {{-- Words, not a dash: "20 – 30" reads backwards in right-to-left text. --}}
                                 {{ $zones[$zone]->count() > 1
@@ -74,19 +74,19 @@
                             </li>
                         @endif
                     @endforeach
-                    <li>{{ Setting::get('delivery_estimate') }}</li>
+                    <li class="py-1">{{ Setting::get('delivery_estimate') }}</li>
                 </ul>
             </div>
         </div>
 
-        <nav class="mt-8 flex flex-wrap gap-x-4 gap-y-2">
-            <a href="{{ url('/track') }}" class="underline">{{ __('store.track') }}</a>
+        <nav class="mt-10 flex flex-wrap gap-x-6" aria-label="{{ __('store.help_nav') }}">
+            <a href="{{ url('/track') }}" class="inline-flex min-h-11 items-center underline underline-offset-4">{{ __('store.track') }}</a>
             @foreach (['about', 'delivery', 'privacy', 'terms'] as $page)
-                <a href="{{ url('/pages/'.$page) }}" class="underline">{{ __('store.page.'.$page) }}</a>
+                <a href="{{ url('/pages/'.$page) }}" class="inline-flex min-h-11 items-center underline underline-offset-4">{{ __('store.page.'.$page) }}</a>
             @endforeach
         </nav>
 
-        <div class="mt-6 flex flex-col items-center justify-between gap-2 border-t border-stone-300 pt-5 sm:flex-row">
+        <div class="mt-6 flex flex-col items-center justify-between gap-2 border-t border-white/25 pt-6 sm:flex-row">
             <p>&copy; {{ date('Y') }} {{ $storeName }}. {{ __('store.rights') }}</p>
             <p>{{ __('store.cod_only') }}</p>
         </div>

@@ -1,10 +1,10 @@
 <x-layouts.store :title="__('store.page.'.$page)">
-    <article class="card mx-auto max-w-2xl p-5">
-        <h1 class="mb-3 text-2xl font-bold">{{ __('store.page.'.$page) }}</h1>
+    <article class="wrap grid gap-6 py-8 md:py-16 lg:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] lg:gap-16">
+        <h1 class="title-1">{{ __('store.page.'.$page) }}</h1>
         @if ($body)
-            <div class="rich">{!! str($body)->sanitizeHtml() !!}</div>
+            <div class="rich max-w-2xl text-lg">{!! str($body)->sanitizeHtml() !!}</div>
         @else
-            <p class="text-stone-600">{{ __('store.page_soon') }}</p>
+            <p class="text-lg text-muted">{{ __('store.page_soon') }}</p>
         @endif
     </article>
 </x-layouts.store>

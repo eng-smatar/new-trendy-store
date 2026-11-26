@@ -3,27 +3,21 @@
 Calm, product-first, phone-first, right-to-left. Photos carry the colour; the interface stays neutral.
 
 ## Tokens (`resources/css/app.css`)
-- Brand: admin-set `main_color` (default `#3f2878`), used for primary buttons, links, active states and focus. White text sits on it, so it must be dark (settings reject light colours).
-- Neutrals: Tailwind `stone`; page `stone-50`, cards white with a `stone-200` border.
-- Type: IBM Plex Sans Arabic 400/500/700. Body 16px (no smaller on inputs), titles 20-24px, price bold.
-- Shape: cards `rounded-2xl`, controls `rounded-xl`, touch targets at least 44px.
-- Spacing: 16px page gutter, 12px grid gap on phones, 16px from `sm`; content max width 1152px.
+- One accent: the admin's `main_color` (default `#3f2878`, the logo purple) for the primary button, links, focus and the one brand band; `brand-deep` for the footer. The logo's orange appears only in the logo.
+- Neutrals: `ink`, `muted`, `line`, `soft`; the page is white.
+- Type: IBM Plex Sans Arabic. One scale: `title-1`, `title-2`, `title-3`, body 16px, nothing under 14px.
+- Edges: every block sits in `wrap` (1280px content at 1440; 24 / 48 / 80px gutters).
+- Buttons: one pair, `.btn-primary` and `.btn-ghost`, 44px, `rounded-xl`. `.link` is the one text link; `.chip` for filters and options.
 
-## Components
-`.btn-primary`, `.btn-ghost`, `.field`, `.label`, `.error`, `.card`, `.rich`.
-Product card: square image, two-line name, price, "out of stock" badge.
-
-## Layouts (phone first)
-- **Header**: store name or logo, search, cart with count.
-- **Home**: announcement, banner, category chips, featured grid, new arrivals grid.
-- **Listing**: title, filters in a disclosure, 2 columns (3 `sm`, 4 `lg`), pager.
-- **Product**: gallery, name, price, options, add button, description, related.
-- **Cart**: line list, subtotal, continue button.
-- **Checkout**: one column: details, address, summary, confirm.
+## Layouts
+- **Header**: logo, shop links (desktop), search, cart. Sticky, one hairline.
+- **Home**: headline and fact, slider of random products, category tiles with photos, featured, new arrivals, "how an order works" band.
+- **Product**: large gallery beside name, price, options (only what differs on the buttons), buy row, facts; then description and related.
+- **Cart and checkout**: list or form with a summary column; one column on phones.
 
 ## States
 Loading: dimmed content with `wire:loading`. Empty: one sentence and a link onward. Error: plain Arabic message beside the field or at the top, announced to screen readers.
 
 ## Motion and interaction
-Short and quiet; all movement is off under "reduce motion". Page cross-fade, card lift and image zoom (pointer devices), products rising in on scroll, button press, cart count bump, "added" toast, quantity steppers, sticky add-to-cart bar on phones, back-to-top. CSS and the Alpine bundled with Livewire; no animation library.
+Short and quiet; all movement is off under "reduce motion". It answers the visitor or happens once on load, never because the page scrolled: page cross-fade, hero entrance, card lift and image zoom (pointer devices), button press, cart count bump, "added" toast, quantity steppers, sticky add-to-cart bar on phones. CSS and the Alpine bundled with Livewire; no animation library.
 

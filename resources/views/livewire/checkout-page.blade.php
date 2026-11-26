@@ -1,17 +1,19 @@
 @use(App\Models\Setting)
-<div class="mx-auto max-w-xl">
-    <h1 class="mb-4 text-2xl font-bold">{{ __('store.checkout') }}</h1>
+<div class="wrap py-8 md:py-12">
+    <h1 class="title-1 mb-8">{{ __('store.checkout') }}</h1>
 
     @if (! Setting::get('ordering_enabled'))
         <p class="card p-4" role="status">{{ Setting::get('closed_message') }}</p>
     @elseif ($lines->isEmpty())
-        <div class="py-16 text-center">
-            <p class="mb-4 text-stone-600">{{ __('store.cart_empty') }}</p>
-            <a href="{{ url('/') }}" class="btn-primary">{{ __('store.back_home') }}</a>
+        <div class="py-24 text-center">
+            <p class="mb-6 text-lg">{{ __('store.cart_empty') }}</p>
+            <a href="{{ url('/search') }}" class="btn-primary">{{ __('store.browse_all') }}</a>
         </div>
     @else
-        <form wire:submit="place" class="space-y-4" novalidate>
-            <div class="card grid gap-3 p-4 sm:grid-cols-2">
+        <form wire:submit="place" class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12" novalidate>
+            <div class="space-y-8">
+            <div class="grid gap-4 sm:grid-cols-2">
+                <h2 class="title-3 sm:col-span-2">{{ __('store.your_details') }}</h2>
                 @foreach (['first_name' => 'text', 'last_name' => 'text', 'phone' => 'tel', 'email' => 'email'] as $field => $type)
                     <div>
                         <label for="{{ $field }}" class="label">{{ __("store.fields.$field") }}</label>
@@ -25,14 +27,15 @@
                     <legend class="label">{{ __('store.fields.gender') }}</legend>
                     <div class="flex gap-6">
                         @foreach (['male', 'female'] as $value)
-                            <label class="flex min-h-11 items-center gap-2"><input type="radio" wire:model="gender" value="{{ $value }}" class="size-5">{{ __("store.$value") }}</label>
+                            <label class="flex min-h-11 items-center gap-2"><input type="radio" wire:model="gender" value="{{ $value }}" class="size-5 accent-brand">{{ __("store.$value") }}</label>
                         @endforeach
                     </div>
                     @error('gender')<p class="error" role="alert">{{ $message }}</p>@enderror
                 </fieldset>
             </div>
 
-            <div class="card space-y-3 p-4">
+            <div class="space-y-4 border-t border-line pt-8">
+                <h2 class="title-3">{{ __('store.your_address') }}</h2>
                 <div>
                     <label for="district_id" class="label">{{ __('store.fields.district_id') }}</label>
                     <select id="district_id" wire:model.live="district_id" class="field">
@@ -65,12 +68,24 @@
                 </div>
             </div>
 
-            <div class="card space-y-2 p-4" aria-live="polite">
+            </div>
+
+            <aside class="space-y-4 self-start rounded-xl bg-soft p-6">
+            <h2 class="title-3">{{ __('store.summary') }}</h2>
+            <ul class="border-t border-line">
+                @foreach ($lines as $line)
+                    <li class="flex justify-between gap-3 border-b border-line py-2 text-sm">
+                        <span class="line-clamp-2 flex-1 text-right" dir="auto">{{ $line['product']->name }} × {{ $line['quantity'] }}</span>
+                        <x-price :amount="$line['unit_price'] * $line['quantity']" class="shrink-0" />
+                    </li>
+                @endforeach
+            </ul>
+            <div class="totals space-y-2" aria-live="polite">
                 <div class="flex justify-between"><span>{{ __('store.subtotal') }}</span><x-price :amount="$figures['products_total'] ?? $subtotal" /></div>
                 <div class="flex justify-between">
                     <span>{{ __('store.delivery') }}</span>
                     @if (! $figures)
-                        <span class="text-stone-500">{{ __('store.choose_town') }}</span>
+                        <span class="text-muted">{{ __('store.choose_town') }}</span>
                     @elseif ($figures['free_shipping'])
                         <span class="font-bold text-green-700">{{ __('store.free') }}</span>
                     @else
@@ -78,16 +93,17 @@
                     @endif
                 </div>
                 @if ($figures)
-                    <div class="flex justify-between border-t border-stone-200 pt-2 text-lg font-bold"><span>{{ __('store.total') }}</span><x-price :amount="$figures['customer_total']" /></div>
+                    <div class="flex justify-between border-t border-line pt-3 title-3"><span>{{ __('store.total') }}</span><x-price :amount="$figures['customer_total']" /></div>
                 @endif
-                <p class="text-sm text-stone-600">{{ Setting::get('delivery_estimate') }} · {{ __('store.cod') }}</p>
+                <p class="text-sm text-muted">{{ Setting::get('delivery_estimate') }} · {{ __('store.cod') }}</p>
             </div>
 
             @if ($notice)
-                <p class="card border-amber-300 bg-amber-50 p-3" role="alert">{{ $notice }}</p>
+                <p class="rounded-lg border border-amber-400 bg-amber-50 p-3" role="alert">{{ $notice }}</p>
             @endif
 
             <button type="submit" class="btn-primary w-full" wire:loading.attr="disabled" @disabled(! $figures)>{{ __('store.confirm_order') }}</button>
+            </aside>
         </form>
     @endif
 </div>
