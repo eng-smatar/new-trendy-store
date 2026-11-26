@@ -139,6 +139,12 @@ return [
     'slider_cache_help' => 'The same products stay for this long. 0 picks new ones on every visit. Saving picks again.',
     'needs_action' => 'Needs action',
     'mark_handled' => 'Mark as handled',
+    'mail' => [
+        'subject' => 'New order :reference',
+        'heading' => 'A new order is waiting for review',
+        'town' => 'Town',
+        'review' => 'Review the order',
+    ],
     'errors' => [
         'check_in_mart' => 'Check this order in Mart first.',
         'product_gone' => '":name" is no longer available.',

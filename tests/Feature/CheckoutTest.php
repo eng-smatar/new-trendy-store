@@ -8,10 +8,14 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Town;
+use App\Models\User;
+use App\Notifications\NewOrderReceived;
 use App\Services\Cart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
+use RuntimeException;
 use Tests\TestCase;
 
 class CheckoutTest extends TestCase
@@ -92,6 +96,44 @@ class CheckoutTest extends TestCase
         $this->assertSame([], app(Cart::class)->raw());
         Http::assertNotSent(fn ($r) => str_ends_with($r->url(), '/api/v1/orders'));
         $this->get("/orders/{$order->reference}/done")->assertOk();
+    }
+
+    public function test_every_admin_is_emailed_in_their_language_without_customer_details(): void
+    {
+        Notification::fake();
+        self::fakeMart();
+        $arabic = User::factory()->create(['locale' => 'ar']);
+        $english = User::factory()->create(['locale' => 'en']);
+
+        $this->fill(Product::factory()->create())->call('place');
+
+        $order = Order::sole();
+        Notification::assertSentTo([$arabic, $english], NewOrderReceived::class);
+        Notification::assertCount(2);
+
+        foreach ([[$arabic, 'ar', 'rtl'], [$english, 'en', 'ltr']] as [$user, $locale, $direction]) {
+            app()->setLocale($user->preferredLocale());
+            $mail = (new NewOrderReceived($order))->toMail($user);
+            $html = view($mail->view, $mail->viewData)->render();
+
+            $this->assertSame(__('admin.mail.subject', ['reference' => $order->reference], $locale), $mail->subject);
+            $this->assertStringContainsString("dir=\"$direction\"", $html);
+            $this->assertStringContainsString("/admin/orders/{$order->id}", $html);
+            $this->assertStringNotContainsString($order->phone, $html);
+            $this->assertStringNotContainsString($order->first_name, $html);
+        }
+    }
+
+    public function test_a_broken_queue_does_not_lose_the_order(): void
+    {
+        self::fakeMart();
+        User::factory()->create();
+        Notification::shouldReceive('send')->once()->andThrow(new RuntimeException('Redis is down'));
+
+        $this->fill(Product::factory()->create())->call('place')->assertRedirect();
+
+        $this->assertSame(1, Order::count());
+        $this->assertSame([], app(Cart::class)->raw());
     }
 
     public function test_changed_total_needs_a_second_confirmation(): void

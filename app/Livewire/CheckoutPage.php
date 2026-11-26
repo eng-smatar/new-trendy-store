@@ -7,6 +7,8 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Setting;
 use App\Models\Town;
+use App\Models\User;
+use App\Notifications\NewOrderReceived;
 use App\Services\ArabicText;
 use App\Services\Cart;
 use App\Services\Checkout;
@@ -14,6 +16,7 @@ use App\Services\CheckoutException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -140,6 +143,9 @@ class CheckoutPage extends Component
                 $order->fill($figures)->save();
                 $order->items()->saveMany($order->items);
             });
+
+            // The order is saved: a queue that is down must not turn it into an error for the customer.
+            rescue(fn () => Notification::send(User::all(), new NewOrderReceived($order)));
 
             RateLimiter::hit($phoneKey, 3600);
             RateLimiter::hit($ipKey, 3600);
