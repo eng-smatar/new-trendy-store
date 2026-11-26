@@ -19,6 +19,8 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="APP_URL" value="http://localhost"/>
+        <env name="FORCE_HTTPS" value="false"/>
         <env name="MART_BASE_URL" value="https://mart.test"/>
         <env name="MART_API_KEY" value="mk_test_fake"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>

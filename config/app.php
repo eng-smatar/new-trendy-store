@@ -54,6 +54,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // Generate every link and asset address with https (see AppServiceProvider).
+    'force_https' => (bool) env('FORCE_HTTPS', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

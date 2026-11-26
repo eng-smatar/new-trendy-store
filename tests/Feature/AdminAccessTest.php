@@ -7,6 +7,7 @@ use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Providers\AppServiceProvider;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -56,6 +57,24 @@ class AdminAccessTest extends TestCase
         $this->get('/horizon')->assertForbidden(); // outside the local environment
 
         $this->actingAs(User::factory()->create())->get('/horizon')->assertOk();
+    }
+
+    public function test_force_https_switches_generated_addresses(): void
+    {
+        $boot = function (bool $force) {
+            config(['app.force_https' => $force]);
+            (new AppServiceProvider(app()))->boot();
+
+            return [url('/cart'), asset('logo.png')];
+        };
+
+        // Off first: once forced, a process stays forced.
+        foreach ($boot(false) as $address) {
+            $this->assertStringStartsWith('http://', $address);
+        }
+        foreach ($boot(true) as $address) {
+            $this->assertStringStartsWith('https://', $address);
+        }
     }
 
     public function test_seeding_works_and_creates_no_account(): void

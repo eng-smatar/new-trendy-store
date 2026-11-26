@@ -30,7 +30,7 @@ Queued jobs run on Redis through [Horizon](https://laravel.com/docs/horizon); it
 
 ## Going live
 
-- `APP_ENV=production`, `APP_DEBUG=false`, HTTPS, `SESSION_SECURE_COOKIE=true`.
+- `APP_ENV=production`, `APP_DEBUG=false`, HTTPS with `FORCE_HTTPS=true` (links and assets use https; let the web server redirect http requests), `SESSION_SECURE_COOKIE=true`.
 - Set the `MAIL_*` values to a real mail server and `APP_URL` to the public address: every admin is emailed about each new order, at the address in their profile.
 - Keep Redis private and persistent (AOF), so queued jobs survive a restart.
 - On a server that used the database queue, let it empty before switching.
