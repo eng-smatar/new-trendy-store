@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -43,14 +44,32 @@ class Home extends Component
         ];
     }
 
+    /** Five random products, kept for the period set in settings (0 = new on every visit). */
+    private function slides(): Collection
+    {
+        $buyable = fn () => Product::visible()->where('total_quantity', '>', 0)->whereNotNull('cover_image');
+        $pick = fn () => $buyable()->inRandomOrder()->limit(5)->pluck('id')->all();
+        $hours = (int) Setting::get('slider_cache_hours');
+        $ids = $hours > 0 ? Cache::remember('home.slides', now()->addHours($hours), $pick) : $pick();
+
+        // Only ids are cached, so price and availability are always current.
+        $slides = $buyable()->findMany($ids);
+
+        if ($slides->isEmpty()) {
+            Cache::forget('home.slides');
+            $slides = $buyable()->findMany($ids = $pick());
+        }
+
+        return $slides->sortBy(fn (Product $product) => array_search($product->id, $ids))->values();
+    }
+
     public function render()
     {
         $arrivals = Product::visible()->where('total_quantity', '>', 0)->orderByDesc('id')->limit(12)->get();
 
         return view('livewire.home', [
             'announcement' => Setting::get('announcement'),
-            // A new random pick on every visit.
-            'slides' => Product::visible()->where('total_quantity', '>', 0)->whereNotNull('cover_image')->inRandomOrder()->limit(5)->get(),
+            'slides' => $this->slides(),
             'categories' => $this->categoryTiles($arrivals->modelKeys()),
             'featured' => Product::visible()->where('featured', true)->orderByDesc('id')->limit(8)->get(),
             'arrivals' => $arrivals,

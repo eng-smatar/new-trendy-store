@@ -93,6 +93,7 @@ return [
         'Isreal' => 'Free delivery from (48 areas)',
     ],
     'fields' => [
+        'slider_cache_hours' => 'Keep slider products for (hours)',
         'listing_min_profit' => 'Minimum profit per item',
         'listing_categories' => 'Categories to list',
         'footer_text' => 'Footer description',
@@ -135,6 +136,7 @@ return [
     'listing_min_profit_help' => 'Profit is selling price minus cost. 0 means no filter.',
     'listing_categories_help' => 'Choosing a category includes its subcategories. Leave empty to list everything.',
     'profit' => 'Profit',
+    'slider_cache_help' => 'The same products stay for this long. 0 picks new ones on every visit. Saving picks again.',
     'errors' => [
         'check_in_mart' => 'Check this order in Mart first.',
         'product_gone' => '":name" is no longer available.',

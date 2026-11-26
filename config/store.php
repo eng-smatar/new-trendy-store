@@ -16,6 +16,8 @@ return [
         // Which products shoppers see: minimum profit in ILS, and category ids (empty = all).
         'listing_min_profit' => 0,
         'listing_categories' => [],
+        // Hours the home slider keeps the same random products.
+        'slider_cache_hours' => 2,
         'main_color' => '#3f2878',
         'ordering_enabled' => true,
         'closed_message' => 'استقبال الطلبات متوقف حالياً.',

@@ -196,6 +196,25 @@ class CatalogTest extends TestCase
         $this->assertSame([$product->id.':' => 2], app(Cart::class)->raw());
     }
 
+    public function test_home_slider_keeps_its_pick_for_the_set_hours(): void
+    {
+        Product::factory()->count(30)->create(['cover_image' => 'https://img.test/a.jpg']);
+        $slides = fn () => Livewire::test(Home::class)->viewData('slides')->modelKeys();
+
+        $first = $slides();
+        $this->travel(119)->minutes();
+        $this->assertSame($first, $slides());
+
+        Product::find($first[0])->update(['hidden' => true]); // drops out at once
+        $this->assertSame(array_slice($first, 1), $slides());
+
+        $this->travel(2)->minutes(); // past the 2 hours: 5 slides again
+        $this->assertCount(5, $slides());
+
+        Setting::set('slider_cache_hours', 0);
+        $this->assertNotSame($slides(), $slides());
+    }
+
     public function test_description_scripts_are_removed(): void
     {
         $product = Product::factory()->create(['description' => '<p>وصف</p><script>alert(1)</script><img src=x onerror="alert(2)">']);

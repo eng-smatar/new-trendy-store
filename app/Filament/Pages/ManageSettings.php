@@ -20,6 +20,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Cache;
 
 class ManageSettings extends Page
 {
@@ -30,7 +31,7 @@ class ManageSettings extends Page
     public const KEYS = [
         'store_name', 'logo', 'icon', 'main_color',
         'footer_text', 'contact_phone', 'whatsapp', 'contact_email', 'contact_address', 'social_links',
-        'announcement',
+        'announcement', 'slider_cache_hours',
         'page_about', 'page_delivery', 'page_privacy', 'page_terms',
         'seo_title', 'seo_description', 'seo_image',
         'listing_min_profit', 'listing_categories',
@@ -114,6 +115,8 @@ class ManageSettings extends Page
                 ]),
                 Tab::make(__('admin.tabs.home'))->schema([
                     $text('announcement', 200),
+                    TextInput::make('slider_cache_hours')->label(__('admin.fields.slider_cache_hours'))
+                        ->helperText(__('admin.slider_cache_help'))->integer()->required()->minValue(0)->maxValue(168),
                 ]),
                 Tab::make(__('admin.tabs.pages'))->schema(array_map(
                     fn (string $page) => RichEditor::make("page_$page")->label(__("admin.fields.page_$page"))
@@ -179,6 +182,9 @@ class ManageSettings extends Page
         if ((float) Setting::get('markup_percent') !== $oldMarkup) {
             Pricing::recalculate();
         }
+
+        // A save may change the period or what is listed: pick the slider again.
+        Cache::forget('home.slides');
 
         Notification::make()->success()->title(__('admin.saved'))->send();
     }
